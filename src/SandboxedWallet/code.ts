@@ -6,6 +6,14 @@ async function getIframeCode(args: { id: string; executor: SandboxExecutor; code
   const manifest = args.executor.manifest;
   const uuid = args.id;
 
+  // Two-layer localStorage proxy strategy:
+  // 1. Text replacement (below): rewrites executor source at build time.
+  //    Handles the common case but misses bracket notation, Reflect, and
+  //    library-internal introspection (e.g. SES lockdown).
+  // 2. Object.defineProperty (in iframe <script>): runtime override that
+  //    catches all access patterns. See the sandboxedLocalStorage block.
+  // Both are needed: defineProperty could silently fail if a browser makes
+  // the property non-configurable, and the regex can't reach dynamic access.
   const code = args.code
     .replaceAll(".localStorage", ".sandboxedLocalStorage")
     // Catches bare `localStorage` references (e.g. from WalletConnect SDK) not matched by the `.localStorage` replacement above
@@ -103,6 +111,23 @@ async function getIframeCode(args: { id: string; executor: SandboxExecutor; code
 
 
       <script>
+      window.addEventListener("error", function(event) {
+        window.parent.postMessage({
+          method: "wallet-error",
+          origin: "${uuid}",
+          error: event.message + (event.filename ? " at " + event.filename + ":" + event.lineno : "")
+        }, "*");
+      });
+      window.addEventListener("unhandledrejection", function(event) {
+        window.parent.postMessage({
+          method: "wallet-error",
+          origin: "${uuid}",
+          error: String(event.reason)
+        }, "*");
+      });
+      </script>
+
+      <script>
       window.sandboxedLocalStorage = (() => {
         let storage = ${JSON.stringify(storage)}
 
@@ -127,6 +152,18 @@ async function getIframeCode(args: { id: string; executor: SandboxExecutor; code
           },
         };
       })();
+
+      // Override the localStorage property so that any access pattern
+      // (including SES lockdown introspection) returns the proxy
+      // instead of throwing a SecurityError in the sandboxed iframe.
+      try {
+        Object.defineProperty(window, 'localStorage', {
+          get: function() { return window.sandboxedLocalStorage; },
+          configurable: true,
+        });
+      } catch (e) {
+        // Silently ignore if the property can't be redefined
+      }
 
       const showPrompt = async (args) => {
         const root = document.getElementById("root");   

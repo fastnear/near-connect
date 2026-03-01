@@ -357,7 +357,7 @@ export class MyNearWalletConnector {
 const wallet: Record<string, MyNearWalletConnector> = {
   mainnet: new MyNearWalletConnector("https://app.mynearwallet.com", {
     networkId: "mainnet",
-    nodeUrl: "https://rpc.mainnet.near.org",
+    nodeUrl: "https://rpc.mainnet.fastnear.com",
     helperUrl: "https://helper.mainnet.near.org",
     explorerUrl: "https://explorer.mainnet.near.org",
     indexerUrl: "https://indexer.mainnet.near.org",
@@ -365,7 +365,7 @@ const wallet: Record<string, MyNearWalletConnector> = {
 
   testnet: new MyNearWalletConnector("https://testnet.mynearwallet.com", {
     networkId: "testnet",
-    nodeUrl: "https://rpc.testnet.near.org",
+    nodeUrl: "https://rpc.testnet.fastnear.com",
     helperUrl: "https://helper.testnet.near.org",
     explorerUrl: "https://explorer.testnet.near.org",
     indexerUrl: "https://indexer.testnet.near.org",

@@ -266,6 +266,32 @@ window.addEventListener("near-selector-ready", () => {
 });
 ```
 
+## Executor timeout and error reporting
+
+Wallet executors run in sandboxed `about:srcdoc` iframes. When an executor is loaded, the library awaits a `readyPromise` that resolves when the executor calls `window.selector.ready(wallet)`. If the executor crashes before calling `ready()` (e.g., a `SecurityError` from `localStorage` access under SES lockdown), the promise would hang indefinitely, blocking `restore()` and leaving the UI stuck.
+
+Three layers of defense prevent this:
+
+1. **In-iframe error reporter** (`SandboxedWallet/code.ts`): A `<script>` block injected before all other scripts installs `error` and `unhandledrejection` listeners that post a `wallet-error` message to the parent with the error details. This gives **fast failure with a diagnostic message** instead of a silent wait.
+
+2. **readyPromise rejection** (`SandboxedWallet/iframe.ts`): The `IframeExecutor` handles `wallet-error` messages by rejecting `readyPromise` with the crash reason, so the caller gets an immediate, descriptive error.
+
+3. **Timeout fallback** (`SandboxedWallet/executor.ts`): A 5-second `Promise.race` catches cases where even the error reporter fails (e.g., the script never loads). The timeout is cleaned up via `clearTimeout` in a `finally` block to prevent dangling timers and unhandled rejections on the happy path.
+
+### Why this design?
+
+- No browser API can replace the `postMessage` handshake: the iframe `load` event fires before `<script type="module">` executes, and the `error` event only fires for network failures, not JS exceptions.
+- The parent cannot detect errors in a sandboxed iframe (opaque origin, no `contentWindow` access), so the iframe must **self-report** via `postMessage`.
+- `Promise.race` + `setTimeout` is the [standard pattern](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/race) for timing out `postMessage` handshakes. WalletConnect's verify iframe [lacks this and has a known bug](https://github.com/WalletConnect/walletconnect-monorepo/issues/3500) where their iframe hangs connections indefinitely.
+- The dangling timer from `Promise.race` [must be cleared](https://advancedweb.hu/how-to-add-timeout-to-a-promise-in-javascript/) in a `finally` block — otherwise the `setTimeout` stays scheduled on the happy path, eventually calling `reject()` on a settled promise and producing an unhandled rejection.
+
+### References
+
+- [Promise.race() — MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/race)
+- [How to add timeout to a Promise in JavaScript](https://advancedweb.hu/how-to-add-timeout-to-a-promise-in-javascript/) — covers the `finally`/`clearTimeout` pattern
+- [WalletConnect verify iframe failed to load — Issue #3500](https://github.com/WalletConnect/walletconnect-monorepo/issues/3500) — example of a missing timeout causing indefinite hangs
+- [Request/Reply communication between iframe & host](https://gist.github.com/duongphuhiep/a3ed34c7bbd49199337a234e7b48a0d5) — `postMessage` + timeout pattern for iframes
+
 ## Background and future audit scope
 
 Maintaining the current near-wallet-selector takes a lot of time and effort, wallet developers wait a long time to get an update to their connector inside a monolithic code base. After which they can wait months for applications to integrate their wallet into their site or update their frontend to update the wallet connector. This requires a lot of work on the review side of the near-wallet-selector team and STILL does not ensure the security of internal packages that will be installed in applications (for example, RHEA Finance or Near Intents).

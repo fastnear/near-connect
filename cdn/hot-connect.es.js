@@ -1,4 +1,4 @@
-class v {
+class k {
   async get(e) {
     return typeof window > "u" ? null : localStorage.getItem(e);
   }
@@ -9,7 +9,7 @@ class v {
     typeof window > "u" || localStorage.removeItem(e);
   }
 }
-const f = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+const p = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 function I(r) {
   if (r.length === 0) return "";
   let e = 0, t = 0;
@@ -26,9 +26,9 @@ function I(r) {
   for (; n.length > 0 && n[n.length - 1] === 0; ) n.pop();
   let s = "";
   for (let o = 0; o < e; o++)
-    s += f[0];
+    s += p[0];
   for (let o = n.length - 1; o >= 0; --o)
-    s += f[n[o]];
+    s += p[n[o]];
   return s;
 }
 const S = (r) => {
@@ -37,7 +37,7 @@ const S = (r) => {
   } catch {
     return r;
   }
-}, h = (r) => r.map((e) => {
+}, u = (r) => r.map((e) => {
   if ("type" in e) return e;
   if (e.functionCall)
     return {
@@ -110,7 +110,7 @@ const S = (r) => {
       }
     };
   throw new Error("Unsupported action type");
-}), g = () => typeof window < "u" && typeof window.crypto < "u" && typeof window.crypto.randomUUID == "function" ? window.crypto.randomUUID() : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(r) {
+}), m = () => typeof window < "u" && typeof window.crypto < "u" && typeof window.crypto.randomUUID == "function" ? window.crypto.randomUUID() : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(r) {
   const e = Math.random() * 16 | 0;
   return (r === "x" ? e : e & 3 | 8).toString(16);
 });
@@ -119,7 +119,7 @@ class C {
     this.connector = e, this.manifest = t;
   }
   callParentFrame(e, t) {
-    const n = g();
+    const n = m();
     return window.parent.postMessage({ type: "near-wallet-injected-request", id: n, method: e, params: t }, "*"), new Promise((s, o) => {
       const a = (i) => {
         i.data.type === "near-wallet-injected-response" && i.data.id === n && (window.removeEventListener("message", a), i.data.success ? s(i.data.result) : o(i.data.error));
@@ -153,13 +153,13 @@ class C {
     return this.callParentFrame("near:getAccounts", t);
   }
   async signAndSendTransaction(e) {
-    const t = h(e.actions), n = { ...e, actions: t, network: e.network || this.connector.network };
+    const t = u(e.actions), n = { ...e, actions: t, network: e.network || this.connector.network };
     return this.callParentFrame("near:signAndSendTransaction", n);
   }
   async signAndSendTransactions(e) {
     const t = { ...e, network: e.network || this.connector.network };
     return t.transactions = t.transactions.map((n) => ({
-      actions: h(n.actions),
+      actions: u(n.actions),
       receiverId: n.receiverId
     })), this.callParentFrame("near:signAndSendTransactions", t);
   }
@@ -172,7 +172,7 @@ class C {
       ...e,
       delegateActions: e.delegateActions.map((n) => ({
         ...n,
-        actions: h(n.actions)
+        actions: u(n.actions)
       })),
       network: e.network || this.connector.network
     };
@@ -183,14 +183,14 @@ class C {
     return this.callParentFrame("near:addFunctionCallKey", t);
   }
 }
-const u = (r) => {
+const g = (r) => {
   try {
     return new URL(r);
   } catch {
     return null;
   }
 };
-class y {
+class x {
   /** Internal storage for event callbacks */
   events = {};
   /**
@@ -244,18 +244,18 @@ class y {
 function A(r) {
   return r.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
-const m = Symbol("htmlTag");
-function d(r, ...e) {
+const f = Symbol("htmlTag");
+function h(r, ...e) {
   let t = r[0];
   for (let n = 0; n < e.length; n++) {
     for (const s of Array.isArray(e[n]) ? e[n] : [e[n]]) {
-      const o = s?.[m] ? s[m] : A(String(s ?? ""));
+      const o = s?.[f] ? s[f] : A(String(s ?? ""));
       t += o;
     }
     t += r[n + 1];
   }
   return Object.freeze({
-    [m]: t,
+    [f]: t,
     get html() {
       return t;
     }
@@ -313,7 +313,7 @@ ${r} .modal-content {
   align-items: center;
 
   max-width: 420px;
-  max-height: 615px;
+  max-height: 665px;
   width: 100%;
   border-radius: 24px;
   background: #0d0d0d;
@@ -521,12 +521,12 @@ ${r} .connect-item p {
   margin: 0;
 }
 `
-), x = `n${Math.random().toString(36).substring(2, 15)}`;
+), b = `n${Math.random().toString(36).substring(2, 15)}`;
 if (typeof document < "u") {
   const r = document.createElement("style");
-  r.textContent = E(`.${x}`), document.head.append(r);
+  r.textContent = E(`.${b}`), document.head.append(r);
 }
-class b {
+class v {
   constructor(e) {
     this.delegate = e;
   }
@@ -534,7 +534,7 @@ class b {
   root = document.createElement("div");
   state = {};
   get dom() {
-    return d``;
+    return h``;
   }
   disposables = [];
   addListener(e, t, n) {
@@ -552,7 +552,7 @@ class b {
     this.state = { ...this.state, ...e }, this.root.innerHTML = this.dom.html, this.handlers();
   }
   create({ show: e = !0 }) {
-    this.root.className = `${x} hot-connector-popup`, this.root.innerHTML = this.dom.html, document.body.append(this.root), this.handlers();
+    this.root.className = `${b} hot-connector-popup`, this.root.innerHTML = this.dom.html, document.body.append(this.root), this.handlers();
     const t = this.root.querySelector(".modal-container"), n = this.root.querySelector(".modal-content");
     n.style.transform = "translateY(50px)", t.style.opacity = "0", this.root.style.display = "none", e && setTimeout(() => this.show(), 10);
   }
@@ -574,7 +574,7 @@ class b {
     }, 200));
   }
 }
-class $ extends b {
+class $ extends v {
   constructor(e) {
     super(e), this.delegate = e;
   }
@@ -582,20 +582,20 @@ class $ extends b {
     super.handlers(), this.addListener("button", "click", () => this.delegate.onApprove());
   }
   create() {
-    super.create({ show: !1 }), this.root.querySelector(".modal-body").appendChild(this.delegate.iframe), this.delegate.iframe.style.width = "100%", this.delegate.iframe.style.height = "720px", this.delegate.iframe.style.border = "none";
+    super.create({ show: !1 }), this.root.querySelector(".modal-body").appendChild(this.delegate.iframe), this.delegate.iframe.style.width = "100%", this.delegate.iframe.style.height = "770px", this.delegate.iframe.style.border = "none";
   }
   get footer() {
     if (!this.delegate.footer) return "";
     const { icon: e, heading: t } = this.delegate.footer;
-    return d`
+    return h`
       <div class="footer">
-        ${e ? d`<img src="${e}" alt="${t}" />` : ""}
+        ${e ? h`<img src="${e}" alt="${t}" />` : ""}
         <p>${t}</p>
       </div>
     `;
   }
   get dom() {
-    return d`<div class="modal-container">
+    return h`<div class="modal-container">
       <div class="modal-content">
         <div class="modal-body" style="padding: 0; overflow: auto;"></div>
         ${this.footer}
@@ -697,6 +697,23 @@ async function P(r) {
 
 
       <script>
+      window.addEventListener("error", function(event) {
+        window.parent.postMessage({
+          method: "wallet-error",
+          origin: "${s}",
+          error: event.message + (event.filename ? " at " + event.filename + ":" + event.lineno : "")
+        }, "*");
+      });
+      window.addEventListener("unhandledrejection", function(event) {
+        window.parent.postMessage({
+          method: "wallet-error",
+          origin: "${s}",
+          error: String(event.reason)
+        }, "*");
+      });
+      <\/script>
+
+      <script>
       window.sandboxedLocalStorage = (() => {
         let storage = ${JSON.stringify(e)}
 
@@ -721,6 +738,18 @@ async function P(r) {
           },
         };
       })();
+
+      // Override the localStorage property so that any access pattern
+      // (including SES lockdown introspection) returns the proxy
+      // instead of throwing a SecurityError in the sandboxed iframe.
+      try {
+        Object.defineProperty(window, 'localStorage', {
+          get: function() { return window.sandboxedLocalStorage; },
+          configurable: true,
+        });
+      } catch (e) {
+        // Silently ignore if the property can't be redefined
+      }
 
       const showPrompt = async (args) => {
         const root = document.getElementById("root");   
@@ -926,8 +955,10 @@ async function P(r) {
 }
 class M {
   constructor(e, t, n) {
-    this.executor = e, this.origin = g(), this.handler = (o) => {
-      o.data.origin === this.origin && (o.data.method === "wallet-ready" && this.readyPromiseResolve(), n(this, o));
+    this.executor = e, this.origin = m(), this.handler = (o) => {
+      o.data.origin === this.origin && (o.data.method === "wallet-ready" && this.readyPromiseResolve(), o.data.method === "wallet-error" && this.readyPromiseReject(
+        new Error(`Wallet executor crashed: ${o.data.error}`)
+      ), n(this, o));
     }, window.addEventListener("message", this.handler);
     const s = [];
     this.executor.checkPermissions("usb") && s.push("usb *;"), this.executor.checkPermissions("hid") && s.push("hid *;"), this.executor.checkPermissions("clipboardRead") && s.push("clipboard-read;"), this.executor.checkPermissions("clipboardWrite") && s.push("clipboard-write;"), this.iframe.allow = s.join(" "), this.iframe.setAttribute("sandbox", "allow-scripts"), P({ id: this.origin, executor: this.executor, code: t }).then((o) => {
@@ -944,12 +975,13 @@ class M {
   }
   origin;
   iframe = document.createElement("iframe");
-  events = new y();
+  events = new x();
   popup;
   handler;
   readyPromiseResolve;
-  readyPromise = new Promise((e) => {
-    this.readyPromiseResolve = e;
+  readyPromiseReject;
+  readyPromise = new Promise((e, t) => {
+    this.readyPromiseResolve = e, this.readyPromiseReject = t;
   });
   on(e, t) {
     this.events.on(e, t);
@@ -968,7 +1000,7 @@ class M {
     window.removeEventListener("message", this.handler), this.popup.destroy();
   }
 }
-const N = g();
+const N = m();
 class L {
   constructor(e, t) {
     this.connector = e, this.manifest = t, this.storageSpace = t.id;
@@ -983,9 +1015,9 @@ class L {
       return !n || !t?.entity ? !1 : n.includes(t.entity);
     }
     if (e === "allowsOpen") {
-      const n = u(t?.url || ""), s = this.manifest.permissions.allowsOpen;
+      const n = g(t?.url || ""), s = this.manifest.permissions.allowsOpen;
       return !n || !s || !Array.isArray(s) || s.length === 0 ? !1 : s.some((a) => {
-        const i = u(a);
+        const i = g(a);
         return !(!i || n.protocol !== i.protocol || i.hostname && n.hostname !== i.hostname || i.pathname && i.pathname !== "/" && n.pathname !== i.pathname);
       });
     }
@@ -1098,7 +1130,7 @@ class L {
     if (t.data.method === "external") {
       this.assertPermissions(e, "external", t);
       try {
-        const { entity: o, key: a, args: i } = t.data.params, l = o.split(".").reduce((w, k) => w[k], window);
+        const { entity: o, key: a, args: i } = t.data.params, l = o.split(".").reduce((d, w) => d[w], window);
         o === "nightly.near" && a === "signTransaction" && (i[0].encode = () => i[0]);
         const c = typeof l[a] == "function" ? await l[a](...i || []) : l[a];
         n(c);
@@ -1114,19 +1146,19 @@ class L {
         o.openTelegramLink(t.data.params.url);
         return;
       }
-      const a = window.open(t.data.params.url, "_blank", t.data.params.features), i = a ? g() : null, l = (c) => {
-        const w = u(t.data.params.url);
-        w && w.origin === c.origin && e.postMessage(c.data);
+      const a = window.open(t.data.params.url, "_blank", t.data.params.features), i = a ? m() : null, l = (c) => {
+        const d = g(t.data.params.url);
+        d && d.origin === c.origin && e.postMessage(c.data);
       };
       if (n(i), window.addEventListener("message", l), a && i) {
         this.activePanels[i] = a;
         const c = setInterval(() => {
           if (!a?.closed) return;
           window.removeEventListener("message", l);
-          const w = { method: "proxy-window:closed", windowId: i };
+          const d = { method: "proxy-window:closed", windowId: i };
           delete this.activePanels[i], clearInterval(c);
           try {
-            e.postMessage(w);
+            e.postMessage(d);
           } catch {
           }
         }, 500);
@@ -1135,7 +1167,7 @@ class L {
     }
     if (t.data.method === "open.nativeApp") {
       this.assertPermissions(e, "allowsOpen", t);
-      const o = u(t.data.params.url);
+      const o = g(t.data.params.url);
       if (!o || ["https", "http", "javascript:", "file:", "data:", "blob:", "about:"].includes(o.protocol))
         throw s("Invalid URL"), new Error("[open.nativeApp] Invalid URL");
       const i = document.createElement("iframe");
@@ -1147,8 +1179,8 @@ class L {
   async checkNewVersion(e, t) {
     if (this.actualCode)
       return this.connector.logger?.log("New version of code already checked"), this.actualCode;
-    let n = u(e.manifest.executor);
-    if (n || (n = u(location.origin + e.manifest.executor)), !n) throw new Error("Invalid executor URL");
+    let n = g(e.manifest.executor);
+    if (n || (n = g(location.origin + e.manifest.executor)), !n) throw new Error("Invalid executor URL");
     n.searchParams.set("nonce", N);
     const s = await fetch(n.toString()).then((o) => o.text());
     return this.connector.logger?.log("New version of code fetched"), this.actualCode = s, s === t ? (this.connector.logger?.log("New version of code is the same as the current version"), this.actualCode) : (await this.connector.db.setItem(`${this.manifest.id}:${this.manifest.version}`, s), this.connector.logger?.log("New version of code saved to cache"), s);
@@ -1163,17 +1195,33 @@ class L {
     t?.signerId && localStorage.setItem(`${this.storageSpace}:signedAccountId`, t.signerId), this.connector.logger?.log("Add to queue", e, t), this.connector.logger?.log("Calling method", e, t);
     const n = await this.loadCode();
     this.connector.logger?.log("Code loaded, preparing");
-    const s = new M(this, n, this._onMessage);
-    this.connector.logger?.log("Code loaded, iframe initialized"), await s.readyPromise, this.connector.logger?.log("Iframe ready");
-    const o = g();
-    return new Promise((a, i) => {
+    const s = 5e3, o = new M(this, n, this._onMessage);
+    this.connector.logger?.log("Code loaded, iframe initialized");
+    let a;
+    try {
+      await Promise.race([
+        o.readyPromise,
+        new Promise((l, c) => {
+          a = setTimeout(() => c(new Error(
+            `Wallet executor "${this.manifest.name}" did not initialize within ${s / 1e3}s`
+          )), s);
+        })
+      ]);
+    } catch (l) {
+      throw o.dispose(), l;
+    } finally {
+      clearTimeout(a);
+    }
+    this.connector.logger?.log("Iframe ready");
+    const i = m();
+    return new Promise((l, c) => {
       try {
-        const l = (c) => {
-          c.data.id !== o || c.data.origin !== s.origin || (s.dispose(), window.removeEventListener("message", l), this.connector.logger?.log("postMessage", { result: c.data, request: { method: e, params: t } }), c.data.status === "failed" ? i(c.data.result) : a(c.data.result));
+        const d = (w) => {
+          w.data.id !== i || w.data.origin !== o.origin || (o.dispose(), window.removeEventListener("message", d), this.connector.logger?.log("postMessage", { result: w.data, request: { method: e, params: t } }), w.data.status === "failed" ? c(w.data.result) : l(w.data.result));
         };
-        window.addEventListener("message", l), s.postMessage({ method: e, params: t, id: o }), s.on("close", () => i(new Error("Wallet closed")));
-      } catch (l) {
-        this.connector.logger?.log("Iframe error", l), i(l);
+        window.addEventListener("message", d), o.postMessage({ method: e, params: t, id: i }), o.on("close", () => c(new Error("Wallet closed")));
+      } catch (d) {
+        this.connector.logger?.log("Iframe error", d), c(d);
       }
     });
   }
@@ -1189,7 +1237,7 @@ class L {
       localStorage.removeItem(t);
   }
 }
-class p {
+class y {
   constructor(e, t) {
     this.connector = e, this.manifest = t, this.executor = new L(e, t);
   }
@@ -1218,12 +1266,12 @@ class p {
     return this.executor.call("wallet:getAccounts", t);
   }
   async signAndSendTransaction(e) {
-    const t = h(e.actions), n = { ...e, actions: t, network: e.network || this.connector.network };
+    const t = u(e.actions), n = { ...e, actions: t, network: e.network || this.connector.network };
     return this.executor.call("wallet:signAndSendTransaction", n);
   }
   async signAndSendTransactions(e) {
     const t = e.transactions.map((s) => ({
-      actions: h(s.actions),
+      actions: u(s.actions),
       receiverId: s.receiverId
     })), n = { ...e, transactions: t, network: e.network || this.connector.network };
     return this.executor.call("wallet:signAndSendTransactions", n);
@@ -1237,7 +1285,7 @@ class p {
       ...e,
       delegateActions: e.delegateActions.map((n) => ({
         ...n,
-        actions: h(n.actions)
+        actions: u(n.actions)
       })),
       network: e.network || this.connector.network
     };
@@ -1306,13 +1354,13 @@ class W {
     return this.wallet.getAccounts({ network: e?.network || this.connector.network });
   }
   async signAndSendTransaction(e) {
-    const t = h(e.actions), n = e.network || this.connector.network, s = await this.wallet.signAndSendTransaction({ ...e, actions: t, network: n });
+    const t = u(e.actions), n = e.network || this.connector.network, s = await this.wallet.signAndSendTransaction({ ...e, actions: t, network: n });
     if (!s) throw new Error("No result from wallet");
     return Array.isArray(s.transactions) ? s.transactions[0] : s;
   }
   async signAndSendTransactions(e) {
     const t = e.network || this.connector.network, n = e.transactions.map((o) => ({
-      actions: h(o.actions),
+      actions: u(o.actions),
       receiverId: o.receiverId
     })), s = await this.wallet.signAndSendTransactions({ ...e, transactions: n, network: t });
     if (!s) throw new Error("No result from wallet");
@@ -1326,7 +1374,7 @@ class W {
       ...e,
       delegateActions: e.delegateActions.map((t) => ({
         ...t,
-        actions: h(t.actions)
+        actions: u(t.actions)
       })),
       network: e.network || this.connector.network
     });
@@ -1336,7 +1384,7 @@ class W {
     return this.wallet.addFunctionCallKey({ ...e, network: e.network || this.connector.network });
   }
 }
-const D = {
+const j = {
   id: "custom-wallet",
   name: "Custom Wallet",
   icon: "https://www.mynearwallet.com/images/webclip.png",
@@ -1359,7 +1407,7 @@ const D = {
     allowsOpen: []
   }
 };
-class K extends b {
+class D extends v {
   constructor(e) {
     super(e), this.delegate = e, this.update({ wallets: e.wallets, showSettings: !1 });
   }
@@ -1385,7 +1433,7 @@ class K extends b {
     super.create({ show: !0 });
   }
   walletDom(e) {
-    const t = d`
+    const t = h`
       <svg
         class="remove-wallet-button"
         data-type="${e.id}"
@@ -1400,12 +1448,12 @@ class K extends b {
         <path d="M6 6L18 18" stroke="rgba(255,255,255,0.5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
     `;
-    return d`
+    return h`
       <div class="connect-item" data-type="${e.id}">
         <img style="background: #333" src="${e.icon}" alt="${e.name}" />
         <div class="connect-item-info">
           <span>${e.name}</span>
-          <span class="wallet-address">${u(e.website)?.hostname}</span>
+          <span class="wallet-address">${g(e.website)?.hostname}</span>
         </div>
         ${e.debug ? t : ""}
       </div>
@@ -1414,16 +1462,16 @@ class K extends b {
   get footer() {
     if (!this.delegate.footer) return "";
     const { icon: e, heading: t, link: n, linkText: s } = this.delegate.footer;
-    return d`
+    return h`
       <div class="footer">
-        ${e ? d`<img src="${e}" alt="${t}" />` : ""}
+        ${e ? h`<img src="${e}" alt="${t}" />` : ""}
         <p>${t}</p>
         <a class="get-wallet-link" href="${n}" target="_blank">${s}</a>
       </div>
     `;
   }
   get dom() {
-    return this.state.showSettings ? d`
+    return this.state.showSettings ? h`
         <div class="modal-container">
           <div class="modal-content">
             <div class="modal-header">
@@ -1441,14 +1489,14 @@ class K extends b {
                 <a href="https://github.com/azbang/hot-connector" target="_blank">read the documentation.</a> Paste your manifest and click "Add".
               </p>
 
-              <textarea style="width: 100%;" id="debug-manifest-input" rows="10">${JSON.stringify(D, null, 2)}</textarea>
+              <textarea style="width: 100%;" id="debug-manifest-input" rows="10">${JSON.stringify(j, null, 2)}</textarea>
               <button class="add-debug-manifest-button">Add</button>
             </div>
 
             ${this.footer}
           </div>
         </div>
-      ` : d`<div class="modal-container">
+      ` : h`<div class="modal-container">
       <div class="modal-content">
         <div class="modal-header">
           <p>Select wallet</p>
@@ -1468,7 +1516,7 @@ class K extends b {
     </div>`;
   }
 }
-class j {
+class K {
   dbName;
   storeName;
   version;
@@ -1616,12 +1664,7 @@ class F {
   autoConnect;
   whenManifestLoaded;
   constructor(e) {
-    this.db = new j("hot-connector", "wallets"), this.storage = e?.storage ?? new v(), this.events = e?.events ?? new y(), this.logger = e?.logger, this.network = e?.network ?? "mainnet", this.walletConnect = e?.walletConnect, this.autoConnect = e?.autoConnect ?? !0, this.providers = e?.providers ?? { mainnet: [], testnet: [] }, this.excludedWallets = e?.excludedWallets ?? [], this.features = e?.features ?? {}, this.signInData = e?.signIn, e?.footerBranding !== void 0 ? this.footerBranding = e?.footerBranding : this.footerBranding = {
-      icon: "https://pages.near.org/wp-content/uploads/2023/11/NEAR_token.png",
-      heading: "NEAR Connector",
-      link: "https://wallet.near.org",
-      linkText: "Don't have a wallet?"
-    }, this.whenManifestLoaded = new Promise(async (t) => {
+    this.db = new K("hot-connector", "wallets"), this.storage = e?.storage ?? new k(), this.events = e?.events ?? new x(), this.logger = e?.logger, this.network = e?.network ?? "mainnet", this.walletConnect = e?.walletConnect, this.autoConnect = e?.autoConnect ?? !0, this.providers = e?.providers ?? { mainnet: [], testnet: [] }, this.excludedWallets = e?.excludedWallets ?? [], this.features = e?.features ?? {}, this.signInData = e?.signIn, this.footerBranding = e?.footerBranding ?? null, this.whenManifestLoaded = new Promise(async (t) => {
       e?.manifest == null || typeof e.manifest == "string" ? this.manifest = await this._loadManifest(e?.manifest).catch(() => ({ wallets: [], version: "1.0.0" })) : this.manifest = e?.manifest ?? { wallets: [], version: "1.0.0" };
       const n = new Set(this.excludedWallets);
       n.delete("hot-wallet"), this.manifest.wallets = this.manifest.wallets.filter((s) => !(s.permissions.walletConnect && !this.walletConnect || n.has(s.id))), await new Promise((s) => setTimeout(s, 100)), t();
@@ -1655,7 +1698,7 @@ class F {
   }
   async registerWallet(e) {
     if (e.type !== "sandbox") throw new Error("Only sandbox wallets are supported");
-    this.wallets.find((t) => t.manifest.id === e.id) || (this.wallets.push(new p(this, e)), this.events.emit("selector:walletsChanged", {}));
+    this.wallets.find((t) => t.manifest.id === e.id) || (this.wallets.push(new y(this, e)), this.events.emit("selector:walletsChanged", {}));
   }
   async registerDebugWallet(e) {
     const t = typeof e == "string" ? JSON.parse(e) : e;
@@ -1669,7 +1712,7 @@ class F {
     if (!t.features) throw new Error("Manifest must have features");
     if (!t.permissions) throw new Error("Manifest must have permissions");
     if (this.wallets.find((s) => s.manifest.id === t.id)) throw new Error("Wallet already registered");
-    t.debug = !0, this.wallets.unshift(new p(this, t)), this.events.emit("selector:walletsChanged", {});
+    t.debug = !0, this.wallets.unshift(new y(this, t)), this.events.emit("selector:walletsChanged", {});
     const n = this.wallets.filter((s) => s.manifest.debug).map((s) => s.manifest);
     return this.storage.set("debug-wallets", JSON.stringify(n)), t;
   }
@@ -1681,7 +1724,7 @@ class F {
   async selectWallet({ features: e = {} } = {}) {
     return await this.whenManifestLoaded.catch(() => {
     }), new Promise((t, n) => {
-      const s = new K({
+      const s = new D({
         footer: this.footerBranding,
         wallets: this.availableWallets.filter(O(e)).map((o) => o.manifest),
         onRemoveDebugManifest: async (o) => this.removeDebugWallet(o),
@@ -1789,9 +1832,9 @@ class F {
 }
 export {
   W as InjectedWallet,
-  v as LocalStorage,
+  k as LocalStorage,
   F as NearConnector,
   C as ParentFrameWallet,
-  p as SandboxWallet,
-  h as nearActionsToConnectorActions
+  y as SandboxWallet,
+  u as nearActionsToConnectorActions
 };

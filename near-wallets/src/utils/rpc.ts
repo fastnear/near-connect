@@ -34,12 +34,8 @@ const wait = (timeout: number) => {
   return new Promise<void>((resolve) => setTimeout(resolve, timeout));
 };
 
-const c1 = Math.random() > 0.5;
 export const rpcProviders = [
-  "https://relmn.aurora.dev",
-  "https://nearrpc.aurora.dev",
-  c1 ? "https://c1.rpc.fastnear.com" : "https://c2.rpc.fastnear.com",
-  c1 ? "https://c2.rpc.fastnear.com" : "https://c1.rpc.fastnear.com",
+  "https://rpc.mainnet.fastnear.com",
 ];
 
 export class NearRpc {
