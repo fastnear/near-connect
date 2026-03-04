@@ -30,7 +30,7 @@
     "@noble/curves": "^2.0.1",
     "@noble/hashes": "^2.0.1",
     "@types/node": "^24.9.1",
-    "@walletconnect/modal": "^2.7.0",
+    "@walletconnect/sign-client": "^2.23.7",
     "borsh": "^2.0.0",
     "patch-package": "^8.0.1",
     "qrcode-generator": "^1.4.4",

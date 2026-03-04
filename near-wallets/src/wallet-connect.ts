@@ -1,3 +1,4 @@
+import SignClient from "@walletconnect/sign-client";
 import { serialize as borshSerialize, deserialize as borshDeserialize } from "borsh";
 import { bytesToBase64, mapTransaction, SCHEMA } from "@fastnear/utils";
 import type { PlainTransaction } from "@fastnear/utils";
@@ -28,6 +29,32 @@ const retry = <Value>(func: () => Promise<Value>, opts: RetryOptions = {}): Prom
       return retry(func, { ...opts, retries: retries - 1, interval: interval * 1.5 });
     });
   });
+};
+
+// IKeyValueStorage adapter bridging to window.selector.storage (postMessage to main page localStorage)
+const bridgedStorage = {
+  async getKeys() {
+    return window.selector.storage.keys();
+  },
+  async getEntries<T = any>(): Promise<[string, T][]> {
+    const keys = await this.getKeys();
+    return Promise.all(
+      keys.map(async (k: string) => {
+        const v = await window.selector.storage.get(k);
+        return [k, v ? JSON.parse(v) : undefined] as [string, T];
+      })
+    );
+  },
+  async getItem<T = any>(key: string): Promise<T | undefined> {
+    const v = await window.selector.storage.get(key);
+    return v ? JSON.parse(v) : undefined;
+  },
+  async setItem<T = any>(key: string, value: T): Promise<void> {
+    await window.selector.storage.set(key, JSON.stringify(value));
+  },
+  async removeItem(key: string): Promise<void> {
+    await window.selector.storage.remove(key);
+  },
 };
 
 // Inline WC modal — replaces @walletconnect/modal (126 KB of LitElement UI)
@@ -99,6 +126,32 @@ const wcModal = (() => {
   };
 })();
 
+let client: InstanceType<typeof SignClient> | null = null;
+
+const getClient = async (): Promise<InstanceType<typeof SignClient>> => {
+  if (client) return client;
+  const config = await window.selector.walletConnect.getConfig();
+  client = await SignClient.init({
+    projectId: config.projectId,
+    metadata: {
+      name: config.metadata?.name ?? "NEAR dApp",
+      description: config.metadata?.description ?? "",
+      url: config.metadata?.url ?? window.selector.location,
+      icons: config.metadata?.icons ?? [],
+    },
+    storage: bridgedStorage as any,
+  });
+  return client;
+};
+
+const getSession = () => {
+  if (!client) return null;
+  const keys = client.session.keys;
+  if (!keys.length) return null;
+  const key = keys[keys.length - 1];
+  return key ? client.session.get(key) : null;
+};
+
 const connect = async (network: string) => {
   window.selector.ui.showIframe();
 
@@ -108,7 +161,8 @@ const connect = async (network: string) => {
   spinner.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid" width="80" height="80" style="shape-rendering:auto;display:block;background:transparent"><circle stroke-dasharray="75.4 27.1" r="16" stroke-width="4" stroke="#fff" fill="none" cy="50" cx="50"><animateTransform keyTimes="0;1" values="0 50 50;360 50 50" dur="1.4s" repeatCount="indefinite" type="rotate" attributeName="transform"/></circle></svg>`;
   document.body.appendChild(spinner);
 
-  const result = await window.selector.walletConnect.connect({
+  const sc = await getClient();
+  const result = await sc.connect({
     requiredNamespaces: {
       near: {
         chains: [`near:${network}`],
@@ -118,9 +172,11 @@ const connect = async (network: string) => {
     },
   });
 
+  result.approval();
+
   await new Promise((resolve) => setTimeout(resolve, 100));
   spinner.remove();
-  wcModal.openModal({ uri: result.uri });
+  wcModal.openModal({ uri: result.uri! });
 
   return new Promise(async (resolve, reject) => {
     wcModal.subscribeModal(({ open }) => {
@@ -128,7 +184,7 @@ const connect = async (network: string) => {
     });
 
     while (true) {
-      const session = await window.selector.walletConnect.getSession();
+      const session = getSession();
       if (session) {
         wcModal.closeModal();
         resolve(session);
@@ -139,8 +195,11 @@ const connect = async (network: string) => {
 };
 
 const disconnect = async () => {
-  await window.selector.walletConnect.disconnect({
-    topic: (await window.selector.walletConnect.getSession()).topic,
+  const session = getSession();
+  if (!session) return;
+  const sc = await getClient();
+  await sc.disconnect({
+    topic: session.topic,
     reason: { code: 5900, message: "User disconnected" },
   });
 };
@@ -167,7 +226,7 @@ const serializeTx = (plainTx: PlainTransaction): Uint8Array => {
 
 const WalletConnect = async () => {
   const getAccounts = async (network: string): Promise<Array<{ accountId: string; publicKey: string }>> => {
-    const session = await window.selector.walletConnect.getSession();
+    const session = getSession();
     if (!session) return [];
     return session.namespaces["near"].accounts.map((account: string) => ({
       accountId: account.replace(`near:${network}:`, ""),
@@ -176,8 +235,11 @@ const WalletConnect = async () => {
   };
 
   const requestAccounts = async (network: string) => {
-    return window.selector.walletConnect.request({
-      topic: (await window.selector.walletConnect.getSession()).topic,
+    const session = getSession();
+    if (!session) throw new Error("No active session");
+    const sc = await getClient();
+    return sc.request({
+      topic: session.topic,
       chainId: `near:${network}`,
       request: {
         method: "near_getAccounts",
@@ -191,8 +253,11 @@ const WalletConnect = async () => {
     network: string
   ) => {
     const { message, nonce, recipient, callbackUrl, accountId } = messageParams;
-    return window.selector.walletConnect.request({
-      topic: (await window.selector.walletConnect.getSession()).topic,
+    const session = getSession();
+    if (!session) throw new Error("No active session");
+    const sc = await getClient();
+    return sc.request({
+      topic: session.topic,
       chainId: `near:${network}`,
       request: {
         method: "near_signMessage",
@@ -234,8 +299,11 @@ const WalletConnect = async () => {
     const encodedTx = serializeTx(plainTx);
     const txArray = Array.from(encodedTx);
 
-    const result = await window.selector.walletConnect.request({
-      topic: (await window.selector.walletConnect.getSession()).topic,
+    const session = getSession();
+    if (!session) throw new Error("No active session");
+    const sc = await getClient();
+    const result = await sc.request({
+      topic: session.topic,
       chainId: `near:${network}`,
       request: {
         method: "near_signTransaction",
@@ -280,8 +348,11 @@ const WalletConnect = async () => {
       encodedTxs.push(Array.from(serializeTx(plainTx)));
     }
 
-    const results = await window.selector.walletConnect.request({
-      topic: (await window.selector.walletConnect.getSession()).topic,
+    const session = getSession();
+    if (!session) throw new Error("No active session");
+    const sc = await getClient();
+    const results = await sc.request({
+      topic: session.topic,
       chainId: `near:${network}`,
       request: {
         method: "near_signTransactions",
@@ -294,15 +365,18 @@ const WalletConnect = async () => {
 
   const requestSignOut = async (network: string) => {
     const accounts = await getAccounts(network);
-    await window.selector.walletConnect.request({
-      topic: (await window.selector.walletConnect.getSession()).topic,
+    const session = getSession();
+    if (!session) throw new Error("No active session");
+    const sc = await getClient();
+    await sc.request({
+      topic: session.topic,
       request: { method: "near_signOut", params: { accounts } },
       chainId: `near:${network}`,
     });
   };
 
   const signOut = async (network: string) => {
-    if (await window.selector.walletConnect.getSession()) {
+    if (getSession()) {
       await requestSignOut(network);
       await disconnect();
     }
@@ -311,7 +385,7 @@ const WalletConnect = async () => {
   return {
     async signIn({ network }: any) {
       try {
-        if (await window.selector.walletConnect.getSession()) await disconnect();
+        if (getSession()) await disconnect();
         await connect(network);
         return await getAccounts(network);
       } catch (err) {
@@ -335,7 +409,7 @@ const WalletConnect = async () => {
 
     async signMessage({ message, nonce, recipient, callbackUrl, network }: any) {
       try {
-        if (!(await window.selector.walletConnect.getSession())) await connect(network);
+        if (!getSession()) await connect(network);
         return await requestSignMessage({ message, nonce, recipient, callbackUrl }, network);
       } catch (err) {
         await disconnect();

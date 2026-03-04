@@ -11,7 +11,7 @@ import type {
   WalletFeatures,
   Logger,
   NearWalletBase,
-  AbstractWalletConnect,
+  WalletConnectConfig,
   FooterBranding,
   NearConnector_ConnectOptions,
   AddFunctionCallKeyParams,
@@ -31,7 +31,7 @@ interface NearConnectorOptions {
   network?: Network;
 
   manifest?: string | { wallets: WalletManifest[]; version: string };
-  walletConnect?: Promise<AbstractWalletConnect> | AbstractWalletConnect;
+  walletConnect?: WalletConnectConfig;
 
   events?: EventEmitter<EventMap>;
   storage?: DataStorage;
@@ -79,7 +79,7 @@ export class NearConnector {
 
   providers: { mainnet?: string[]; testnet?: string[] } = { mainnet: [], testnet: [] };
   signInData?: { contractId?: string; methodNames?: Array<string> };
-  walletConnect?: Promise<AbstractWalletConnect> | AbstractWalletConnect;
+  walletConnect?: WalletConnectConfig;
 
   footerBranding: FooterBranding | null;
   excludedWallets: string[] = [];

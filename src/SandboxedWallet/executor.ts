@@ -91,7 +91,10 @@ class SandboxExecutor {
 
     if (event.data.method === "storage.keys") {
       this.assertPermissions(iframe, "storage", event);
-      const keys = Object.keys(localStorage).filter((key) => key.startsWith(`${this.storageSpace}:`));
+      const prefix = `${this.storageSpace}:`;
+      const keys = Object.keys(localStorage)
+        .filter((key) => key.startsWith(prefix))
+        .map((key) => key.slice(prefix.length));
       success(keys);
       return;
     }
@@ -126,71 +129,11 @@ class SandboxExecutor {
       return;
     }
 
-    if (event.data.method === "walletConnect.connect") {
+    if (event.data.method === "walletConnect.getConfig") {
       this.assertPermissions(iframe, "walletConnect", event);
       try {
         if (!this.connector.walletConnect) throw new Error("WalletConnect is not configured");
-        const client = await this.connector.walletConnect;
-        const result = await client.connect(event.data.params);
-        result.approval();
-        success({ uri: result.uri });
-      } catch (e) {
-        failed(e);
-      }
-      return;
-    }
-
-    if (event.data.method === "walletConnect.getProjectId") {
-      this.assertPermissions(iframe, "walletConnect", event);
-      try {
-        if (!this.connector.walletConnect) throw new Error("WalletConnect is not configured");
-        const client = await this.connector.walletConnect;
-        if (!client?.core?.projectId) throw new Error("WalletConnect client not properly initialized (missing core.projectId)");
-        success(client.core.projectId);
-      } catch (e) {
-        failed(e);
-      }
-      return;
-    }
-
-    if (event.data.method === "walletConnect.disconnect") {
-      this.assertPermissions(iframe, "walletConnect", event);
-      try {
-        if (!this.connector.walletConnect) throw new Error("WalletConnect is not configured");
-        const client = await this.connector.walletConnect;
-        const result = await client.disconnect(event.data.params);
-        success(result);
-      } catch (e) {
-        failed(e);
-      }
-      return;
-    }
-
-    if (event.data.method === "walletConnect.getSession") {
-      this.assertPermissions(iframe, "walletConnect", event);
-      try {
-        if (!this.connector.walletConnect) throw new Error("WalletConnect is not configured");
-        const client = await this.connector.walletConnect;
-        if (!client.session?.keys?.length) {
-          success(null);
-          return;
-        }
-        const key = client.session.keys[client.session.keys.length - 1];
-        const session = key ? client.session.get(key) : null;
-        success(session ? { topic: session.topic, namespaces: session.namespaces } : null);
-      } catch (e) {
-        failed(e);
-      }
-      return;
-    }
-
-    if (event.data.method === "walletConnect.request") {
-      this.assertPermissions(iframe, "walletConnect", event);
-      try {
-        if (!this.connector.walletConnect) throw new Error("WalletConnect is not configured");
-        const client = await this.connector.walletConnect;
-        const result = await client.request(event.data.params);
-        success(result);
+        success(this.connector.walletConnect);
       } catch (e) {
         failed(e);
       }

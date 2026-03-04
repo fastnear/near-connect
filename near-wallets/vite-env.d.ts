@@ -3,11 +3,10 @@
 interface Window {
   selector: {
     walletConnect: {
-      connect: (params: EngineTypes.ConnectParams) => Promise<SessionTypes.Struct>;
-      disconnect: (params: EngineTypes.DisconnectParams) => Promise<void>;
-      request: (params: EngineTypes.RequestParams) => Promise<any>;
-      getSession: () => Promise<SessionTypes.Struct>;
-      getProjectId: () => Promise<string>;
+      getConfig: () => Promise<{
+        projectId: string;
+        metadata?: { name?: string; description?: string; url?: string; icons?: string[] };
+      }>;
     };
 
     providers: { mainnet: string[]; testnet: string[] };

@@ -208,18 +208,13 @@ export type WalletEvents = {
   signedOut: null;
 };
 
-export interface AbstractWalletConnect {
-  connect: (params: any) => Promise<{ uri?: string; approval: () => Promise<any> }>;
-  disconnect: (params: any) => Promise<void>;
-  request: (params: any) => Promise<any>;
-
-  session: {
-    keys: string[];
-    get: (key: string) => { topic: string; namespaces: any };
-  };
-
-  core: {
-    projectId?: string;
+export interface WalletConnectConfig {
+  projectId: string;
+  metadata?: {
+    name?: string;
+    description?: string;
+    url?: string;
+    icons?: string[];
   };
 }
 

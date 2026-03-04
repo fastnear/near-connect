@@ -248,20 +248,8 @@ async function getIframeCode(args: { id: string; executor: SandboxExecutor; code
         },
 
         walletConnect: {
-          connect(params) {
-            return window.selector.call("walletConnect.connect", params);
-          },
-          disconnect(params) {
-            return window.selector.call("walletConnect.disconnect", params);
-          },
-          request(params) {
-            return window.selector.call("walletConnect.request", params);
-          },
-          getProjectId() {
-            return window.selector.call("walletConnect.getProjectId", {});
-          },
-          getSession() {
-            return window.selector.call("walletConnect.getSession", {});
+          getConfig() {
+            return window.selector.call("walletConnect.getConfig", {});
           },
         },
       
