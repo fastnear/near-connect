@@ -91,7 +91,7 @@ input::-webkit-inner-spin-button {
   align-items: center;
   position: relative;
 }
-.qr-code canvas {
+.qr-code svg {
   position: absolute;
   top: 70px;
   left: 70px;

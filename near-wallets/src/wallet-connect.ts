@@ -1,23 +1,10 @@
-import { WalletConnectModal } from "@walletconnect/modal";
 import { serialize as borshSerialize, deserialize as borshDeserialize } from "borsh";
 import { bytesToBase64, mapTransaction, SCHEMA } from "@fastnear/utils";
 import type { PlainTransaction } from "@fastnear/utils";
 import { NearRpc } from "./utils/rpc";
 import { connectorActionsToFastnearActions } from "./utils/action";
 import type { ConnectorAction } from "./utils/action";
-
-// Minimal Buffer shim for @walletconnect/modal-core's Telegram deep-link path
-// (it calls Buffer.from(uri).toString("base64") unconditionally in that branch)
-if (typeof globalThis.Buffer === "undefined") {
-  (globalThis as any).Buffer = {
-    from: (data: any) => ({
-      toString: (encoding: string) => {
-        if (encoding === "base64") return btoa(typeof data === "string" ? data : String.fromCharCode(...new Uint8Array(data)));
-        return String(data);
-      },
-    }),
-  };
-}
+import { createQRSvg } from "./utils/qr";
 
 const WC_METHODS = ["near_signIn", "near_signOut", "near_getAccounts", "near_signTransaction", "near_signTransactions", "near_signMessage"];
 const WC_EVENTS = ["chainChanged", "accountsChanged"];
@@ -43,45 +30,83 @@ const retry = <Value>(func: () => Promise<Value>, opts: RetryOptions = {}): Prom
   });
 };
 
-let modal: typeof WalletConnectModal.prototype;
+// Inline WC modal — replaces @walletconnect/modal (126 KB of LitElement UI)
+const wcModal = (() => {
+  let container: HTMLDivElement | null = null;
+  let onClose: (() => void) | null = null;
+
+  const STYLES = `
+    .wc-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:9999;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+    .wc-card{background:#1d1f20;border-radius:16px;padding:24px;max-width:340px;width:100%;display:flex;flex-direction:column;align-items:center;gap:16px;position:relative}
+    .wc-title{color:#e0e0e0;font-size:16px;font-weight:600;margin:0}
+    .wc-qr{border-radius:12px;overflow:hidden}
+    .wc-copy{background:#2a2d2e;color:#fff;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px 20px;font-size:14px;font-weight:500;cursor:pointer;width:100%}
+    .wc-copy:hover{background:#353839}
+    .wc-close{position:absolute;top:12px;right:12px;background:none;border:none;color:#888;font-size:20px;cursor:pointer;padding:4px 8px;line-height:1}
+    .wc-close:hover{color:#fff}
+    .wc-spinner{display:flex;align-items:center;justify-content:center;min-height:200px}
+  `;
+
+  return {
+    openModal({ uri }: { uri: string }) {
+      if (container) container.remove();
+      container = document.createElement("div");
+      container.innerHTML = `<style>${STYLES}</style>
+        <div class="wc-overlay">
+          <div class="wc-card">
+            <button class="wc-close" aria-label="Close">&times;</button>
+            <p class="wc-title">Scan with your wallet</p>
+            <div class="wc-qr"></div>
+            <button class="wc-copy">Copy to clipboard</button>
+          </div>
+        </div>`;
+      document.body.appendChild(container);
+
+      const qrEl = container.querySelector(".wc-qr")!;
+      qrEl.appendChild(createQRSvg(uri, 260));
+
+      container.querySelector(".wc-copy")!.addEventListener("click", () => {
+        navigator.clipboard.writeText(uri).then(() => {
+          const btn = container!.querySelector(".wc-copy")!;
+          btn.textContent = "Copied!";
+          setTimeout(() => (btn.textContent = "Copy to clipboard"), 2000);
+        });
+      });
+
+      container.querySelector(".wc-close")!.addEventListener("click", () => {
+        wcModal.closeModal();
+      });
+
+      container.querySelector(".wc-overlay")!.addEventListener("click", (e) => {
+        if (e.target === e.currentTarget) wcModal.closeModal();
+      });
+    },
+
+    subscribeModal(callback: (state: { open: boolean }) => void) {
+      onClose = () => callback({ open: false });
+    },
+
+    closeModal() {
+      if (container) {
+        container.remove();
+        container = null;
+      }
+      if (onClose) {
+        onClose();
+        onClose = null;
+      }
+    },
+  };
+})();
+
 const connect = async (network: string) => {
   window.selector.ui.showIframe();
-  const rect = document.createElement("div");
-  rect.innerHTML = `<svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 100 100"
-      preserveAspectRatio="xMidYMid"
-      width="80"
-      height="80"
-      style="shape-rendering: auto; display: block; background: transparent;"
-      xmlns:xlink="http://www.w3.org/1999/xlink"
-    >
-      <circle stroke-dasharray="75.39822368615503 27.132741228718345" r="16" stroke-width="4" stroke="#fff" fill="none" cy="50" cx="50">
-        <animateTransform
-          keyTimes="0;1"
-          values="0 50 50;360 50 50"
-          dur="1.408450704225352s"
-          repeatCount="indefinite"
-          type="rotate"
-          attributeName="transform"
-        ></animateTransform>
-      </circle>
-    </svg>`;
 
-  document.body.appendChild(rect);
-  rect.style.position = "absolute";
-  rect.style.top = "50%";
-  rect.style.left = "50%";
-  rect.style.transform = "translate(-50%, -50%)";
-
-  if (!modal) {
-    modal = new WalletConnectModal({
-      chains: [`near:mainnet`, `near:testnet`],
-      projectId: await window.selector.walletConnect.getProjectId(),
-      explorerExcludedWalletIds: "ALL",
-      themeMode: "dark",
-    });
-  }
+  // Show spinner while connecting
+  const spinner = document.createElement("div");
+  spinner.style.cssText = "position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)";
+  spinner.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid" width="80" height="80" style="shape-rendering:auto;display:block;background:transparent"><circle stroke-dasharray="75.4 27.1" r="16" stroke-width="4" stroke="#fff" fill="none" cy="50" cx="50"><animateTransform keyTimes="0;1" values="0 50 50;360 50 50" dur="1.4s" repeatCount="indefinite" type="rotate" attributeName="transform"/></circle></svg>`;
+  document.body.appendChild(spinner);
 
   const result = await window.selector.walletConnect.connect({
     requiredNamespaces: {
@@ -94,16 +119,20 @@ const connect = async (network: string) => {
   });
 
   await new Promise((resolve) => setTimeout(resolve, 100));
-  await modal.openModal({ uri: result.uri, standaloneChains: [`near:${network}`] });
+  spinner.remove();
+  wcModal.openModal({ uri: result.uri });
 
   return new Promise(async (resolve, reject) => {
-    modal.subscribeModal(({ open }) => {
+    wcModal.subscribeModal(({ open }) => {
       if (!open) reject(new Error("User cancelled pairing"));
     });
 
     while (true) {
       const session = await window.selector.walletConnect.getSession();
-      if (session) resolve(session);
+      if (session) {
+        wcModal.closeModal();
+        resolve(session);
+      }
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   });

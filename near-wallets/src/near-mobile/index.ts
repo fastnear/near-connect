@@ -1,5 +1,5 @@
 import { createNearMobileAdapter } from "@fastnear/wallet-adapter";
-import QRCodeStyling from "qr-code-styling";
+import { createQRSvg } from "../utils/qr";
 
 import { nearMobileFrame, nearMobileFrameHead } from "./view";
 import type { ConnectorAction } from "../utils/action";
@@ -35,17 +35,7 @@ async function setQRCode({ requestUrl }: { requestUrl: string }) {
   const qrCodeParent = document.getElementById("qr-code");
   qrCodeParent!.innerHTML = "";
 
-  const qrCode = new QRCodeStyling({
-    width: 180,
-    height: 180,
-    type: "svg",
-    data: requestUrl,
-    dotsOptions: { color: "#FFFFFF" },
-    backgroundOptions: { color: "transparent" },
-    cornersSquareOptions: { color: "#FFFFFF" },
-  });
-
-  qrCode.append(qrCodeParent!);
+  qrCodeParent!.appendChild(createQRSvg(requestUrl, 180));
 
   if (isMobile() && approveButton) {
     const urlParts = requestUrl.split("/");
