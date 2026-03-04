@@ -23,4 +23,5 @@ export type {
   AccountWithSignedMessage,
   AddFunctionCallKeyParams,
   AddFunctionCallKeyResult,
+  WalletConnectConfig,
 } from "./types";
