@@ -322,7 +322,7 @@ To publish a new version of `@fastnear/near-connect`:
 
 3. Publish to npm:
    ```sh
-   yarn npm publish --access public --otp <code>
+   yarn npm publish --access public --otp 
    ```
 
 > **Note:** Only `@fastnear/near-connect` is published to npm. The `near-wallets/` package is not published separately — it builds executor scripts into `./repository/` and CDN bundles into `./cdn/`, which are referenced by the manifest.
