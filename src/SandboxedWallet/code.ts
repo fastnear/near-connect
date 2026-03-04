@@ -112,13 +112,16 @@ async function getIframeCode(args: { id: string; executor: SandboxExecutor; code
 
       <script>
       window.addEventListener("error", function(event) {
+        var msg = event.message + (event.filename ? " at " + event.filename + ":" + event.lineno : "");
+        console.error("[near-connect iframe] error:", msg);
         window.parent.postMessage({
           method: "wallet-error",
           origin: "${uuid}",
-          error: event.message + (event.filename ? " at " + event.filename + ":" + event.lineno : "")
+          error: msg
         }, "*");
       });
       window.addEventListener("unhandledrejection", function(event) {
+        console.error("[near-connect iframe] unhandledrejection:", String(event.reason));
         window.parent.postMessage({
           method: "wallet-error",
           origin: "${uuid}",
@@ -128,6 +131,13 @@ async function getIframeCode(args: { id: string; executor: SandboxExecutor; code
       </script>
 
       <script>
+      // Fix fetch binding in sandboxed iframe — bundled code that aliases
+      // or destructures fetch loses the window context, causing
+      // "Failed to execute 'fetch' on 'Window': Illegal invocation".
+      if (typeof fetch === 'function') {
+        window.fetch = fetch.bind(window);
+      }
+
       window.sandboxedLocalStorage = (() => {
         let storage = ${JSON.stringify(storage)}
 

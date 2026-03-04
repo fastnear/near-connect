@@ -24,10 +24,16 @@ class IframeExecutor {
     this.origin = uuid4();
     this.handler = (event: MessageEvent<any>) => {
       if (event.data.origin !== this.origin) return;
-      if (event.data.method === "wallet-ready") this.readyPromiseResolve();
-      if (event.data.method === "wallet-error") this.readyPromiseReject(
-        new Error(`Wallet executor crashed: ${event.data.error}`)
-      );
+      if (event.data.method === "wallet-ready") {
+        console.log(`[near-connect] wallet-ready received for "${this.executor.manifest.name}"`);
+        this.readyPromiseResolve();
+      }
+      if (event.data.method === "wallet-error") {
+        console.error(`[near-connect] wallet-error for "${this.executor.manifest.name}":`, event.data.error);
+        this.readyPromiseReject(
+          new Error(`Wallet executor crashed: ${event.data.error}`)
+        );
+      }
       onMessage(this, event);
     };
 

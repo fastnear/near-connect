@@ -141,10 +141,15 @@ class SandboxExecutor {
     }
 
     if (event.data.method === "walletConnect.getProjectId") {
-      if (!this.connector.walletConnect) throw new Error("WalletConnect is not configured");
       this.assertPermissions(iframe, "walletConnect", event);
-      const client = await this.connector.walletConnect;
-      success(client.core.projectId);
+      try {
+        if (!this.connector.walletConnect) throw new Error("WalletConnect is not configured");
+        const client = await this.connector.walletConnect;
+        if (!client?.core?.projectId) throw new Error("WalletConnect client not properly initialized (missing core.projectId)");
+        success(client.core.projectId);
+      } catch (e) {
+        failed(e);
+      }
       return;
     }
 
@@ -166,6 +171,10 @@ class SandboxExecutor {
       try {
         if (!this.connector.walletConnect) throw new Error("WalletConnect is not configured");
         const client = await this.connector.walletConnect;
+        if (!client.session?.keys?.length) {
+          success(null);
+          return;
+        }
         const key = client.session.keys[client.session.keys.length - 1];
         const session = key ? client.session.get(key) : null;
         success(session ? { topic: session.topic, namespaces: session.namespaces } : null);
@@ -306,6 +315,8 @@ class SandboxExecutor {
   }
 
   async call<T>(method: string, params: any): Promise<T> {
+    console.log(`[near-connect] call("${method}") on "${this.manifest.name}"`);
+
     // Inject signerId into storage so wallet executors find it in sandboxedLocalStorage
     if (params?.signerId) {
       localStorage.setItem(`${this.storageSpace}:signedAccountId`, params.signerId);
@@ -317,7 +328,7 @@ class SandboxExecutor {
     this.connector.logger?.log(`Calling method`, method, params);
 
     const code = await this.loadCode();
-    this.connector.logger?.log(`Code loaded, preparing`);
+    this.connector.logger?.log(`Code loaded, preparing (${code.length} bytes)`);
 
     // Maximum time to wait for a wallet executor to call window.selector.ready().
     // This is the *fallback* timeout — most crashes are caught much faster by the
@@ -358,8 +369,13 @@ class SandboxExecutor {
           window.removeEventListener("message", handler);
           this.connector.logger?.log("postMessage", { result: event.data, request: { method, params } });
 
-          if (event.data.status === "failed") reject(event.data.result);
-          else resolve(event.data.result);
+          if (event.data.status === "failed") {
+            console.warn(`[near-connect] call("${method}") on "${this.manifest.name}" FAILED:`, event.data.result);
+            reject(event.data.result);
+          } else {
+            console.log(`[near-connect] call("${method}") on "${this.manifest.name}" succeeded`);
+            resolve(event.data.result);
+          }
         };
 
         window.addEventListener("message", handler);

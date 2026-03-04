@@ -49,6 +49,7 @@ export class Popup<T extends Record<string, any>> {
 
   create({ show = true }: { show?: boolean }) {
     this.root.className = `${ID} hot-connector-popup`;
+    this.root.style.display = "none";
     this.root.innerHTML = this.dom.html;
     document.body.append(this.root);
     this.handlers();
@@ -57,7 +58,6 @@ export class Popup<T extends Record<string, any>> {
     const modalContent = this.root.querySelector(".modal-content")! as HTMLElement;
     modalContent.style.transform = "translateY(50px)";
     modalContainer.style.opacity = "0";
-    this.root.style.display = "none";
 
     if (show) {
       setTimeout(() => this.show(), 10);
