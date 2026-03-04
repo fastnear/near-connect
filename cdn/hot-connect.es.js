@@ -17,19 +17,19 @@ function I(r) {
     e++, t++;
   let n = [0];
   for (; t < r.length; t++) {
-    let o = r[t];
+    let s = r[t];
     for (let a = 0; a < n.length; ++a)
-      o += n[a] << 8, n[a] = o % 58, o = o / 58 | 0;
-    for (; o > 0; )
-      n.push(o % 58), o = o / 58 | 0;
+      s += n[a] << 8, n[a] = s % 58, s = s / 58 | 0;
+    for (; s > 0; )
+      n.push(s % 58), s = s / 58 | 0;
   }
   for (; n.length > 0 && n[n.length - 1] === 0; ) n.pop();
-  let s = "";
-  for (let o = 0; o < e; o++)
-    s += p[0];
-  for (let o = n.length - 1; o >= 0; --o)
-    s += p[n[o]];
-  return s;
+  let o = "";
+  for (let s = 0; s < e; s++)
+    o += p[0];
+  for (let s = n.length - 1; s >= 0; --s)
+    o += p[n[s]];
+  return o;
 }
 const S = (r) => {
   try {
@@ -37,7 +37,7 @@ const S = (r) => {
   } catch {
     return r;
   }
-}, u = (r) => r.map((e) => {
+}, w = (r) => r.map((e) => {
   if ("type" in e) return e;
   if (e.functionCall)
     return {
@@ -120,9 +120,9 @@ class C {
   }
   callParentFrame(e, t) {
     const n = m();
-    return window.parent.postMessage({ type: "near-wallet-injected-request", id: n, method: e, params: t }, "*"), new Promise((s, o) => {
+    return window.parent.postMessage({ type: "near-wallet-injected-request", id: n, method: e, params: t }, "*"), new Promise((o, s) => {
       const a = (i) => {
-        i.data.type === "near-wallet-injected-response" && i.data.id === n && (window.removeEventListener("message", a), i.data.success ? s(i.data.result) : o(i.data.error));
+        i.data.type === "near-wallet-injected-response" && i.data.id === n && (window.removeEventListener("message", a), i.data.success ? o(i.data.result) : s(i.data.error));
       };
       window.addEventListener("message", a);
     });
@@ -153,13 +153,13 @@ class C {
     return this.callParentFrame("near:getAccounts", t);
   }
   async signAndSendTransaction(e) {
-    const t = u(e.actions), n = { ...e, actions: t, network: e.network || this.connector.network };
+    const t = w(e.actions), n = { ...e, actions: t, network: e.network || this.connector.network };
     return this.callParentFrame("near:signAndSendTransaction", n);
   }
   async signAndSendTransactions(e) {
     const t = { ...e, network: e.network || this.connector.network };
     return t.transactions = t.transactions.map((n) => ({
-      actions: u(n.actions),
+      actions: w(n.actions),
       receiverId: n.receiverId
     })), this.callParentFrame("near:signAndSendTransactions", t);
   }
@@ -172,7 +172,7 @@ class C {
       ...e,
       delegateActions: e.delegateActions.map((n) => ({
         ...n,
-        actions: u(n.actions)
+        actions: w(n.actions)
       })),
       network: e.network || this.connector.network
     };
@@ -227,8 +227,8 @@ class x {
    * @param callback Function to be called when event is emitted
    */
   once(e, t) {
-    const n = (s) => {
-      t(s), this.off(e, n);
+    const n = (o) => {
+      t(o), this.off(e, n);
     };
     this.on(e, n);
   }
@@ -248,9 +248,9 @@ const f = Symbol("htmlTag");
 function h(r, ...e) {
   let t = r[0];
   for (let n = 0; n < e.length; n++) {
-    for (const s of Array.isArray(e[n]) ? e[n] : [e[n]]) {
-      const o = s?.[f] ? s[f] : A(String(s ?? ""));
-      t += o;
+    for (const o of Array.isArray(e[n]) ? e[n] : [e[n]]) {
+      const s = o?.[f] ? o[f] : A(String(o ?? ""));
+      t += s;
     }
     t += r[n + 1];
   }
@@ -261,7 +261,7 @@ function h(r, ...e) {
     }
   });
 }
-const E = (r) => (
+const $ = (r) => (
   /*css*/
   `
 ${r} * {
@@ -524,7 +524,7 @@ ${r} .connect-item p {
 ), b = `n${Math.random().toString(36).substring(2, 15)}`;
 if (typeof document < "u") {
   const r = document.createElement("style");
-  r.textContent = E(`.${b}`), document.head.append(r);
+  r.textContent = $(`.${b}`), document.head.append(r);
 }
 class v {
   constructor(e) {
@@ -538,8 +538,8 @@ class v {
   }
   disposables = [];
   addListener(e, t, n) {
-    const s = typeof e == "string" ? this.root.querySelector(e) : e;
-    s && (s.addEventListener(t, n), this.disposables.push(() => s.removeEventListener(t, n)));
+    const o = typeof e == "string" ? this.root.querySelector(e) : e;
+    o && (o.addEventListener(t, n), this.disposables.push(() => o.removeEventListener(t, n)));
   }
   handlers() {
     this.disposables.forEach((n) => n()), this.disposables = [];
@@ -552,9 +552,9 @@ class v {
     this.state = { ...this.state, ...e }, this.root.innerHTML = this.dom.html, this.handlers();
   }
   create({ show: e = !0 }) {
-    this.root.className = `${b} hot-connector-popup`, this.root.innerHTML = this.dom.html, document.body.append(this.root), this.handlers();
+    this.root.className = `${b} hot-connector-popup`, this.root.style.display = "none", this.root.innerHTML = this.dom.html, document.body.append(this.root), this.handlers();
     const t = this.root.querySelector(".modal-container"), n = this.root.querySelector(".modal-content");
-    n.style.transform = "translateY(50px)", t.style.opacity = "0", this.root.style.display = "none", e && setTimeout(() => this.show(), 10);
+    n.style.transform = "translateY(50px)", t.style.opacity = "0", e && setTimeout(() => this.show(), 10);
   }
   show() {
     const e = this.root.querySelector(".modal-container"), t = this.root.querySelector(".modal-content");
@@ -574,7 +574,7 @@ class v {
     }, 200));
   }
 }
-class $ extends v {
+class E extends v {
   constructor(e) {
     super(e), this.delegate = e;
   }
@@ -604,7 +604,7 @@ class $ extends v {
   }
 }
 async function P(r) {
-  const e = await r.executor.getAllStorage(), t = r.executor.connector.providers, n = r.executor.manifest, s = r.id, o = r.code.replaceAll(".localStorage", ".sandboxedLocalStorage").replaceAll(new RegExp("(?<![.\\w])localStorage(?=[\\.\\[\\(])", "g"), "window.sandboxedLocalStorage").replaceAll("window.top", "window.selector").replaceAll("window.open", "window.selector.open");
+  const e = await r.executor.getAllStorage(), t = r.executor.connector.providers, n = r.executor.manifest, o = r.id, s = r.code.replaceAll(".localStorage", ".sandboxedLocalStorage").replaceAll(new RegExp("(?<![.\\w])localStorage(?=[\\.\\[\\(])", "g"), "window.sandboxedLocalStorage").replaceAll("window.top", "window.selector").replaceAll("window.open", "window.selector.open");
   return (
     /* html */
     `
@@ -698,22 +698,32 @@ async function P(r) {
 
       <script>
       window.addEventListener("error", function(event) {
+        var msg = event.message + (event.filename ? " at " + event.filename + ":" + event.lineno : "");
+        console.error("[near-connect iframe] error:", msg);
         window.parent.postMessage({
           method: "wallet-error",
-          origin: "${s}",
-          error: event.message + (event.filename ? " at " + event.filename + ":" + event.lineno : "")
+          origin: "${o}",
+          error: msg
         }, "*");
       });
       window.addEventListener("unhandledrejection", function(event) {
+        console.error("[near-connect iframe] unhandledrejection:", String(event.reason));
         window.parent.postMessage({
           method: "wallet-error",
-          origin: "${s}",
+          origin: "${o}",
           error: String(event.reason)
         }, "*");
       });
       <\/script>
 
       <script>
+      // Fix fetch binding in sandboxed iframe — bundled code that aliases
+      // or destructures fetch loses the window context, causing
+      // "Failed to execute 'fetch' on 'Window': Illegal invocation".
+      if (typeof fetch === 'function') {
+        window.fetch = fetch.bind(window);
+      }
+
       window.sandboxedLocalStorage = (() => {
         let storage = ${JSON.stringify(e)}
 
@@ -777,7 +787,7 @@ async function P(r) {
           this.windowIdPromise = window.selector.call("open", { url, features });
 
           window.addEventListener("message", async (event) => {            
-            if (event.data.origin !== "${s}") return;
+            if (event.data.origin !== "${o}") return;
             if (!event.data.method?.startsWith("proxy-window:")) return;
             const method = event.data.method.replace("proxy-window:", "");
             if (method === "closed" && event.data.windowId === await this.id()) this.closed = true;
@@ -842,17 +852,17 @@ async function P(r) {
         },
       
         async ready(wallet) {
-          window.parent.postMessage({ method: "wallet-ready", origin: "${s}" }, "*");
+          window.parent.postMessage({ method: "wallet-ready", origin: "${o}" }, "*");
           window.selector.wallet = wallet;
         },
 
         async call(method, params) {
           const id = window.selector.uuid();
-          window.parent.postMessage({ method, params, id, origin: "${s}" }, "*");
+          window.parent.postMessage({ method, params, id, origin: "${o}" }, "*");
 
           return new Promise((resolve, reject) => {
             const handler = (event) => {
-              if (event.data.id !== id || event.data.origin !== "${s}") return;
+              if (event.data.id !== id || event.data.origin !== "${o}") return;
               window.removeEventListener("message", handler);
 
               if (event.data.status === "failed") reject(event.data.result);
@@ -866,7 +876,7 @@ async function P(r) {
         panelClosed(windowId) {
           window.parent.postMessage({ 
             method: "panel.closed", 
-            origin: "${s}", 
+            origin: "${o}", 
             result: { windowId } 
           }, "*");
         },
@@ -919,12 +929,12 @@ async function P(r) {
       };
 
       window.addEventListener("message", async (event) => {
-        if (event.data.origin !== "${s}") return;
+        if (event.data.origin !== "${o}") return;
         if (!event.data.method?.startsWith("wallet:")) return;
       
         const wallet = window.selector.wallet;
         const method = event.data.method.replace("wallet:", "");
-        const payload = { id: event.data.id, origin: "${s}", method };
+        const payload = { id: event.data.id, origin: "${o}", method };
       
         if (wallet == null || typeof wallet[method] !== "function") {
           const data = { ...payload, status: "failed", result: "Method not found" };
@@ -947,7 +957,7 @@ async function P(r) {
       });
       <\/script>
 
-      <script type="module">${o}<\/script>
+      <script type="module">${s}<\/script>
     </body>
   </html>
     `
@@ -955,15 +965,15 @@ async function P(r) {
 }
 class M {
   constructor(e, t, n) {
-    this.executor = e, this.origin = m(), this.handler = (o) => {
-      o.data.origin === this.origin && (o.data.method === "wallet-ready" && this.readyPromiseResolve(), o.data.method === "wallet-error" && this.readyPromiseReject(
-        new Error(`Wallet executor crashed: ${o.data.error}`)
-      ), n(this, o));
+    this.executor = e, this.origin = m(), this.handler = (s) => {
+      s.data.origin === this.origin && (s.data.method === "wallet-ready" && (console.log(`[near-connect] wallet-ready received for "${this.executor.manifest.name}"`), this.readyPromiseResolve()), s.data.method === "wallet-error" && (console.error(`[near-connect] wallet-error for "${this.executor.manifest.name}":`, s.data.error), this.readyPromiseReject(
+        new Error(`Wallet executor crashed: ${s.data.error}`)
+      )), n(this, s));
     }, window.addEventListener("message", this.handler);
-    const s = [];
-    this.executor.checkPermissions("usb") && s.push("usb *;"), this.executor.checkPermissions("hid") && s.push("hid *;"), this.executor.checkPermissions("clipboardRead") && s.push("clipboard-read;"), this.executor.checkPermissions("clipboardWrite") && s.push("clipboard-write;"), this.iframe.allow = s.join(" "), this.iframe.setAttribute("sandbox", "allow-scripts"), P({ id: this.origin, executor: this.executor, code: t }).then((o) => {
-      this.executor.connector.logger?.log("Iframe code injected"), this.iframe.srcdoc = o;
-    }), this.popup = new $({
+    const o = [];
+    this.executor.checkPermissions("usb") && o.push("usb *;"), this.executor.checkPermissions("hid") && o.push("hid *;"), this.executor.checkPermissions("clipboardRead") && o.push("clipboard-read;"), this.executor.checkPermissions("clipboardWrite") && o.push("clipboard-write;"), this.iframe.allow = o.join(" "), this.iframe.setAttribute("sandbox", "allow-scripts"), P({ id: this.origin, executor: this.executor, code: t }).then((s) => {
+      this.executor.connector.logger?.log("Iframe code injected"), this.iframe.srcdoc = s;
+    }), this.popup = new E({
       footer: this.executor.connector.footerBranding,
       iframe: this.iframe,
       onApprove: () => {
@@ -1015,8 +1025,8 @@ class L {
       return !n || !t?.entity ? !1 : n.includes(t.entity);
     }
     if (e === "allowsOpen") {
-      const n = g(t?.url || ""), s = this.manifest.permissions.allowsOpen;
-      return !n || !s || !Array.isArray(s) || s.length === 0 ? !1 : s.some((a) => {
+      const n = g(t?.url || ""), o = this.manifest.permissions.allowsOpen;
+      return !n || !o || !Array.isArray(o) || o.length === 0 ? !1 : o.some((a) => {
         const i = g(a);
         return !(!i || n.protocol !== i.protocol || i.hostname && n.hostname !== i.hostname || i.pathname && i.pathname !== "/" && n.pathname !== i.pathname);
       });
@@ -1028,10 +1038,10 @@ class L {
       throw e.postMessage({ ...n.data, status: "failed", result: "Permission denied" }), new Error("Permission denied");
   }
   _onMessage = async (e, t) => {
-    const n = (o) => {
-      e.postMessage({ ...t.data, status: "success", result: o });
-    }, s = (o) => {
-      e.postMessage({ ...t.data, status: "failed", result: o });
+    const n = (s) => {
+      e.postMessage({ ...t.data, status: "success", result: s });
+    }, o = (s) => {
+      e.postMessage({ ...t.data, status: "failed", result: s });
     };
     if (t.data.method === "ui.showIframe") {
       e.show(), n(null);
@@ -1047,14 +1057,14 @@ class L {
     }
     if (t.data.method === "storage.get") {
       this.assertPermissions(e, "storage", t);
-      const o = localStorage.getItem(`${this.storageSpace}:${t.data.params.key}`);
-      n(o);
+      const s = localStorage.getItem(`${this.storageSpace}:${t.data.params.key}`);
+      n(s);
       return;
     }
     if (t.data.method === "storage.keys") {
       this.assertPermissions(e, "storage", t);
-      const o = Object.keys(localStorage).filter((a) => a.startsWith(`${this.storageSpace}:`));
-      n(o);
+      const s = Object.keys(localStorage).filter((a) => a.startsWith(`${this.storageSpace}:`));
+      n(s);
       return;
     }
     if (t.data.method === "storage.remove") {
@@ -1062,18 +1072,18 @@ class L {
       return;
     }
     if (t.data.method === "panel.focus") {
-      const o = this.activePanels[t.data.params.windowId];
-      o && o.focus(), n(null);
+      const s = this.activePanels[t.data.params.windowId];
+      s && s.focus(), n(null);
       return;
     }
     if (t.data.method === "panel.postMessage") {
-      const o = this.activePanels[t.data.params.windowId];
-      o && o.postMessage(t.data.params.data, "*"), n(null);
+      const s = this.activePanels[t.data.params.windowId];
+      s && s.postMessage(t.data.params.data, "*"), n(null);
       return;
     }
     if (t.data.method === "panel.close") {
-      const o = this.activePanels[t.data.params.windowId];
-      o && o.close(), delete this.activePanels[t.data.params.windowId], n(null);
+      const s = this.activePanels[t.data.params.windowId];
+      s && s.close(), delete this.activePanels[t.data.params.windowId], n(null);
       return;
     }
     if (t.data.method === "walletConnect.connect") {
@@ -1082,16 +1092,21 @@ class L {
         if (!this.connector.walletConnect) throw new Error("WalletConnect is not configured");
         const a = await (await this.connector.walletConnect).connect(t.data.params);
         a.approval(), n({ uri: a.uri });
-      } catch (o) {
-        s(o);
+      } catch (s) {
+        o(s);
       }
       return;
     }
     if (t.data.method === "walletConnect.getProjectId") {
-      if (!this.connector.walletConnect) throw new Error("WalletConnect is not configured");
       this.assertPermissions(e, "walletConnect", t);
-      const o = await this.connector.walletConnect;
-      n(o.core.projectId);
+      try {
+        if (!this.connector.walletConnect) throw new Error("WalletConnect is not configured");
+        const s = await this.connector.walletConnect;
+        if (!s?.core?.projectId) throw new Error("WalletConnect client not properly initialized (missing core.projectId)");
+        n(s.core.projectId);
+      } catch (s) {
+        o(s);
+      }
       return;
     }
     if (t.data.method === "walletConnect.disconnect") {
@@ -1100,8 +1115,8 @@ class L {
         if (!this.connector.walletConnect) throw new Error("WalletConnect is not configured");
         const a = await (await this.connector.walletConnect).disconnect(t.data.params);
         n(a);
-      } catch (o) {
-        s(o);
+      } catch (s) {
+        o(s);
       }
       return;
     }
@@ -1109,10 +1124,15 @@ class L {
       this.assertPermissions(e, "walletConnect", t);
       try {
         if (!this.connector.walletConnect) throw new Error("WalletConnect is not configured");
-        const o = await this.connector.walletConnect, a = o.session.keys[o.session.keys.length - 1], i = a ? o.session.get(a) : null;
+        const s = await this.connector.walletConnect;
+        if (!s.session?.keys?.length) {
+          n(null);
+          return;
+        }
+        const a = s.session.keys[s.session.keys.length - 1], i = a ? s.session.get(a) : null;
         n(i ? { topic: i.topic, namespaces: i.namespaces } : null);
-      } catch (o) {
-        s(o);
+      } catch (s) {
+        o(s);
       }
       return;
     }
@@ -1122,28 +1142,28 @@ class L {
         if (!this.connector.walletConnect) throw new Error("WalletConnect is not configured");
         const a = await (await this.connector.walletConnect).request(t.data.params);
         n(a);
-      } catch (o) {
-        s(o);
+      } catch (s) {
+        o(s);
       }
       return;
     }
     if (t.data.method === "external") {
       this.assertPermissions(e, "external", t);
       try {
-        const { entity: o, key: a, args: i } = t.data.params, l = o.split(".").reduce((d, w) => d[w], window);
-        o === "nightly.near" && a === "signTransaction" && (i[0].encode = () => i[0]);
+        const { entity: s, key: a, args: i } = t.data.params, l = s.split(".").reduce((d, u) => d[u], window);
+        s === "nightly.near" && a === "signTransaction" && (i[0].encode = () => i[0]);
         const c = typeof l[a] == "function" ? await l[a](...i || []) : l[a];
         n(c);
-      } catch (o) {
-        s(o);
+      } catch (s) {
+        o(s);
       }
       return;
     }
     if (t.data.method === "open") {
       this.assertPermissions(e, "allowsOpen", t);
-      const o = typeof window < "u" ? window?.Telegram?.WebApp : null;
-      if (o && t.data.params.url.startsWith("https://t.me")) {
-        o.openTelegramLink(t.data.params.url);
+      const s = typeof window < "u" ? window?.Telegram?.WebApp : null;
+      if (s && t.data.params.url.startsWith("https://t.me")) {
+        s.openTelegramLink(t.data.params.url);
         return;
       }
       const a = window.open(t.data.params.url, "_blank", t.data.params.features), i = a ? m() : null, l = (c) => {
@@ -1167,9 +1187,9 @@ class L {
     }
     if (t.data.method === "open.nativeApp") {
       this.assertPermissions(e, "allowsOpen", t);
-      const o = g(t.data.params.url);
-      if (!o || ["https", "http", "javascript:", "file:", "data:", "blob:", "about:"].includes(o.protocol))
-        throw s("Invalid URL"), new Error("[open.nativeApp] Invalid URL");
+      const s = g(t.data.params.url);
+      if (!s || ["https", "http", "javascript:", "file:", "data:", "blob:", "about:"].includes(s.protocol))
+        throw o("Invalid URL"), new Error("[open.nativeApp] Invalid URL");
       const i = document.createElement("iframe");
       i.src = t.data.params.url, i.style.display = "none", document.body.appendChild(i), e.postMessage({ ...t.data, status: "success", result: null });
       return;
@@ -1182,8 +1202,8 @@ class L {
     let n = g(e.manifest.executor);
     if (n || (n = g(location.origin + e.manifest.executor)), !n) throw new Error("Invalid executor URL");
     n.searchParams.set("nonce", N);
-    const s = await fetch(n.toString()).then((o) => o.text());
-    return this.connector.logger?.log("New version of code fetched"), this.actualCode = s, s === t ? (this.connector.logger?.log("New version of code is the same as the current version"), this.actualCode) : (await this.connector.db.setItem(`${this.manifest.id}:${this.manifest.version}`, s), this.connector.logger?.log("New version of code saved to cache"), s);
+    const o = await fetch(n.toString()).then((s) => s.text());
+    return this.connector.logger?.log("New version of code fetched"), this.actualCode = o, o === t ? (this.connector.logger?.log("New version of code is the same as the current version"), this.actualCode) : (await this.connector.db.setItem(`${this.manifest.id}:${this.manifest.version}`, o), this.connector.logger?.log("New version of code saved to cache"), o);
   }
   async loadCode() {
     const e = await this.connector.db.getItem(`${this.manifest.id}:${this.manifest.version}`).catch(() => null);
@@ -1192,23 +1212,23 @@ class L {
     return e || await t;
   }
   async call(e, t) {
-    t?.signerId && localStorage.setItem(`${this.storageSpace}:signedAccountId`, t.signerId), this.connector.logger?.log("Add to queue", e, t), this.connector.logger?.log("Calling method", e, t);
+    console.log(`[near-connect] call("${e}") on "${this.manifest.name}"`), t?.signerId && localStorage.setItem(`${this.storageSpace}:signedAccountId`, t.signerId), this.connector.logger?.log("Add to queue", e, t), this.connector.logger?.log("Calling method", e, t);
     const n = await this.loadCode();
-    this.connector.logger?.log("Code loaded, preparing");
-    const s = 5e3, o = new M(this, n, this._onMessage);
+    this.connector.logger?.log(`Code loaded, preparing (${n.length} bytes)`);
+    const o = 5e3, s = new M(this, n, this._onMessage);
     this.connector.logger?.log("Code loaded, iframe initialized");
     let a;
     try {
       await Promise.race([
-        o.readyPromise,
+        s.readyPromise,
         new Promise((l, c) => {
           a = setTimeout(() => c(new Error(
-            `Wallet executor "${this.manifest.name}" did not initialize within ${s / 1e3}s`
-          )), s);
+            `Wallet executor "${this.manifest.name}" did not initialize within ${o / 1e3}s`
+          )), o);
         })
       ]);
     } catch (l) {
-      throw o.dispose(), l;
+      throw s.dispose(), l;
     } finally {
       clearTimeout(a);
     }
@@ -1216,10 +1236,10 @@ class L {
     const i = m();
     return new Promise((l, c) => {
       try {
-        const d = (w) => {
-          w.data.id !== i || w.data.origin !== o.origin || (o.dispose(), window.removeEventListener("message", d), this.connector.logger?.log("postMessage", { result: w.data, request: { method: e, params: t } }), w.data.status === "failed" ? c(w.data.result) : l(w.data.result));
+        const d = (u) => {
+          u.data.id !== i || u.data.origin !== s.origin || (s.dispose(), window.removeEventListener("message", d), this.connector.logger?.log("postMessage", { result: u.data, request: { method: e, params: t } }), u.data.status === "failed" ? (console.warn(`[near-connect] call("${e}") on "${this.manifest.name}" FAILED:`, u.data.result), c(u.data.result)) : (console.log(`[near-connect] call("${e}") on "${this.manifest.name}" succeeded`), l(u.data.result)));
         };
-        window.addEventListener("message", d), o.postMessage({ method: e, params: t, id: i }), o.on("close", () => c(new Error("Wallet closed")));
+        window.addEventListener("message", d), s.postMessage({ method: e, params: t, id: i }), s.on("close", () => c(new Error("Wallet closed")));
       } catch (d) {
         this.connector.logger?.log("Iframe error", d), c(d);
       }
@@ -1266,13 +1286,13 @@ class y {
     return this.executor.call("wallet:getAccounts", t);
   }
   async signAndSendTransaction(e) {
-    const t = u(e.actions), n = { ...e, actions: t, network: e.network || this.connector.network };
+    const t = w(e.actions), n = { ...e, actions: t, network: e.network || this.connector.network };
     return this.executor.call("wallet:signAndSendTransaction", n);
   }
   async signAndSendTransactions(e) {
-    const t = e.transactions.map((s) => ({
-      actions: u(s.actions),
-      receiverId: s.receiverId
+    const t = e.transactions.map((o) => ({
+      actions: w(o.actions),
+      receiverId: o.receiverId
     })), n = { ...e, transactions: t, network: e.network || this.connector.network };
     return this.executor.call("wallet:signAndSendTransactions", n);
   }
@@ -1285,20 +1305,20 @@ class y {
       ...e,
       delegateActions: e.delegateActions.map((n) => ({
         ...n,
-        actions: u(n.actions)
+        actions: w(n.actions)
       })),
       network: e.network || this.connector.network
     };
     return this.executor.call("wallet:signDelegateActions", t);
   }
   async addFunctionCallKey(e) {
-    const t = e.network || this.connector.network, n = e.signerId, { publicKey: s } = await this.executor.call("wallet:generateFunctionCallKey", {
+    const t = e.network || this.connector.network, n = e.signerId, { publicKey: o } = await this.executor.call("wallet:generateFunctionCallKey", {
       contractId: e.contractId,
       methodNames: e.methodNames || [],
       network: t
     });
     try {
-      const o = await this.signAndSendTransaction({
+      const s = await this.signAndSendTransaction({
         network: t,
         signerId: n,
         receiverId: n,
@@ -1306,7 +1326,7 @@ class y {
           {
             type: "AddKey",
             params: {
-              publicKey: s,
+              publicKey: o,
               accessKey: {
                 permission: {
                   receiverId: e.contractId,
@@ -1318,10 +1338,10 @@ class y {
           }
         ]
       });
-      return await this.executor.call("wallet:confirmFunctionCallKey", { publicKey: s, network: t }), { publicKey: s, transactionOutcome: o };
-    } catch (o) {
-      throw await this.executor.call("wallet:removeFunctionCallKey", { publicKey: s, network: t }).catch(() => {
-      }), o;
+      return await this.executor.call("wallet:confirmFunctionCallKey", { publicKey: o, network: t }), { publicKey: o, transactionOutcome: s };
+    } catch (s) {
+      throw await this.executor.call("wallet:removeFunctionCallKey", { publicKey: o, network: t }).catch(() => {
+      }), s;
     }
   }
 }
@@ -1354,17 +1374,17 @@ class W {
     return this.wallet.getAccounts({ network: e?.network || this.connector.network });
   }
   async signAndSendTransaction(e) {
-    const t = u(e.actions), n = e.network || this.connector.network, s = await this.wallet.signAndSendTransaction({ ...e, actions: t, network: n });
-    if (!s) throw new Error("No result from wallet");
-    return Array.isArray(s.transactions) ? s.transactions[0] : s;
+    const t = w(e.actions), n = e.network || this.connector.network, o = await this.wallet.signAndSendTransaction({ ...e, actions: t, network: n });
+    if (!o) throw new Error("No result from wallet");
+    return Array.isArray(o.transactions) ? o.transactions[0] : o;
   }
   async signAndSendTransactions(e) {
-    const t = e.network || this.connector.network, n = e.transactions.map((o) => ({
-      actions: u(o.actions),
-      receiverId: o.receiverId
-    })), s = await this.wallet.signAndSendTransactions({ ...e, transactions: n, network: t });
-    if (!s) throw new Error("No result from wallet");
-    return Array.isArray(s.transactions) ? s.transactions : s;
+    const t = e.network || this.connector.network, n = e.transactions.map((s) => ({
+      actions: w(s.actions),
+      receiverId: s.receiverId
+    })), o = await this.wallet.signAndSendTransactions({ ...e, transactions: n, network: t });
+    if (!o) throw new Error("No result from wallet");
+    return Array.isArray(o.transactions) ? o.transactions : o;
   }
   async signMessage(e) {
     return this.wallet.signMessage({ ...e, network: e.network || this.connector.network });
@@ -1374,7 +1394,7 @@ class W {
       ...e,
       delegateActions: e.delegateActions.map((t) => ({
         ...t,
-        actions: u(t.actions)
+        actions: w(t.actions)
       })),
       network: e.network || this.connector.network
     });
@@ -1417,7 +1437,7 @@ class D extends v {
     }), this.root.querySelectorAll(".remove-wallet-button").forEach((e) => {
       e instanceof SVGSVGElement && this.addListener(e, "click", async (t) => {
         t.stopPropagation(), await this.delegate.onRemoveDebugManifest(e.dataset.type);
-        const n = this.state.wallets.filter((s) => s.id !== e.dataset.type);
+        const n = this.state.wallets.filter((o) => o.id !== e.dataset.type);
         this.update({ wallets: n });
       });
     }), this.addListener(".add-debug-manifest-button", "click", async () => {
@@ -1461,12 +1481,12 @@ class D extends v {
   }
   get footer() {
     if (!this.delegate.footer) return "";
-    const { icon: e, heading: t, link: n, linkText: s } = this.delegate.footer;
+    const { icon: e, heading: t, link: n, linkText: o } = this.delegate.footer;
     return h`
       <div class="footer">
         ${e ? h`<img src="${e}" alt="${t}" />` : ""}
         <p>${t}</p>
-        <a class="get-wallet-link" href="${n}" target="_blank">${s}</a>
+        <a class="get-wallet-link" href="${n}" target="_blank">${o}</a>
       </div>
     `;
   }
@@ -1530,13 +1550,13 @@ class K {
         return;
       }
       const n = indexedDB.open(this.dbName, this.version);
-      n.onerror = (s) => {
-        console.error("Error opening database:", s.target.error), t(new Error("Error opening database"));
-      }, n.onsuccess = (s) => {
+      n.onerror = (o) => {
+        console.error("Error opening database:", o.target.error), t(new Error("Error opening database"));
+      }, n.onsuccess = (o) => {
         e(n.result);
-      }, n.onupgradeneeded = (s) => {
-        const o = n.result;
-        o.objectStoreNames.contains(this.storeName) || o.createObjectStore(this.storeName);
+      }, n.onupgradeneeded = (o) => {
+        const s = n.result;
+        s.objectStoreNames.contains(this.storeName) || s.createObjectStore(this.storeName);
       };
     });
   }
@@ -1544,15 +1564,15 @@ class K {
     const t = await this.getDb();
     if (typeof e == "number" && (e = e.toString()), typeof e != "string")
       throw new Error("Key must be a string");
-    return new Promise((n, s) => {
+    return new Promise((n, o) => {
       if (!this.storeName) {
-        s(new Error("Store name not set"));
+        o(new Error("Store name not set"));
         return;
       }
-      const o = t.transaction(this.storeName, "readonly");
-      o.onerror = (l) => s(o.error);
-      const i = o.objectStore(this.storeName).get(e);
-      i.onerror = (l) => s(i.error), i.onsuccess = () => {
+      const s = t.transaction(this.storeName, "readonly");
+      s.onerror = (l) => o(s.error);
+      const i = s.objectStore(this.storeName).get(e);
+      i.onerror = (l) => o(i.error), i.onsuccess = () => {
         n(i.result), t.close();
       };
     });
@@ -1561,16 +1581,16 @@ class K {
     const n = await this.getDb();
     if (typeof e == "number" && (e = e.toString()), typeof e != "string")
       throw new Error("Key must be a string");
-    return new Promise((s, o) => {
+    return new Promise((o, s) => {
       if (!this.storeName) {
-        o(new Error("Store name not set"));
+        s(new Error("Store name not set"));
         return;
       }
       const a = n.transaction(this.storeName, "readwrite");
-      a.onerror = (c) => o(a.error);
+      a.onerror = (c) => s(a.error);
       const l = a.objectStore(this.storeName).put(t, e);
-      l.onerror = (c) => o(l.error), l.onsuccess = () => {
-        n.close(), s();
+      l.onerror = (c) => s(l.error), l.onsuccess = () => {
+        n.close(), o();
       };
     });
   }
@@ -1578,15 +1598,15 @@ class K {
     const t = await this.getDb();
     if (typeof e == "number" && (e = e.toString()), typeof e != "string")
       throw new Error("Key must be a string");
-    return new Promise((n, s) => {
+    return new Promise((n, o) => {
       if (!this.storeName) {
-        s(new Error("Store name not set"));
+        o(new Error("Store name not set"));
         return;
       }
-      const o = t.transaction(this.storeName, "readwrite");
-      o.onerror = (l) => s(o.error);
-      const i = o.objectStore(this.storeName).delete(e);
-      i.onerror = (l) => s(i.error), i.onsuccess = () => {
+      const s = t.transaction(this.storeName, "readwrite");
+      s.onerror = (l) => o(s.error);
+      const i = s.objectStore(this.storeName).delete(e);
+      i.onerror = (l) => o(i.error), i.onsuccess = () => {
         t.close(), n();
       };
     });
@@ -1598,9 +1618,9 @@ class K {
         n(new Error("Store name not set"));
         return;
       }
-      const s = e.transaction(this.storeName, "readonly");
-      s.onerror = (i) => n(s.error);
-      const a = s.objectStore(this.storeName).getAllKeys();
+      const o = e.transaction(this.storeName, "readonly");
+      o.onerror = (i) => n(o.error);
+      const a = o.objectStore(this.storeName).getAllKeys();
       a.onerror = (i) => n(a.error), a.onsuccess = () => {
         t(a.result), e.close();
       };
@@ -1613,9 +1633,9 @@ class K {
         n(new Error("Store name not set"));
         return;
       }
-      const s = e.transaction(this.storeName, "readonly");
-      s.onerror = (i) => n(s.error);
-      const a = s.objectStore(this.storeName).count();
+      const o = e.transaction(this.storeName, "readonly");
+      o.onerror = (i) => n(o.error);
+      const a = o.objectStore(this.storeName).count();
       a.onerror = (i) => n(a.error), a.onsuccess = () => {
         t(a.result), e.close();
       };
@@ -1631,9 +1651,9 @@ class K {
         n(new Error("Store name not set"));
         return;
       }
-      const s = e.transaction(this.storeName, "readwrite");
-      s.onerror = (i) => n(s.error);
-      const a = s.objectStore(this.storeName).clear();
+      const o = e.transaction(this.storeName, "readwrite");
+      o.onerror = (i) => n(o.error);
+      const a = o.objectStore(this.storeName).clear();
       a.onerror = (i) => n(a.error), a.onsuccess = () => {
         e.close(), t();
       };
@@ -1667,18 +1687,18 @@ class F {
     this.db = new K("hot-connector", "wallets"), this.storage = e?.storage ?? new k(), this.events = e?.events ?? new x(), this.logger = e?.logger, this.network = e?.network ?? "mainnet", this.walletConnect = e?.walletConnect, this.autoConnect = e?.autoConnect ?? !0, this.providers = e?.providers ?? { mainnet: [], testnet: [] }, this.excludedWallets = e?.excludedWallets ?? [], this.features = e?.features ?? {}, this.signInData = e?.signIn, this.footerBranding = e?.footerBranding ?? null, this.whenManifestLoaded = new Promise(async (t) => {
       e?.manifest == null || typeof e.manifest == "string" ? this.manifest = await this._loadManifest(e?.manifest).catch(() => ({ wallets: [], version: "1.0.0" })) : this.manifest = e?.manifest ?? { wallets: [], version: "1.0.0" };
       const n = new Set(this.excludedWallets);
-      n.delete("hot-wallet"), this.manifest.wallets = this.manifest.wallets.filter((s) => !(s.permissions.walletConnect && !this.walletConnect || n.has(s.id))), await new Promise((s) => setTimeout(s, 100)), t();
+      n.delete("hot-wallet"), this.manifest.wallets = this.manifest.wallets.filter((o) => !(o.permissions.walletConnect && !this.walletConnect || n.has(o.id))), await new Promise((o) => setTimeout(o, 100)), t();
     }), typeof window < "u" && (window.addEventListener("near-wallet-injected", this._handleNearWalletInjected), window.dispatchEvent(new Event("near-selector-ready")), window.addEventListener("message", async (t) => {
       t.data.type === "near-wallet-injected" && (await this.whenManifestLoaded.catch(() => {
       }), this.wallets = this.wallets.filter((n) => n.manifest.id !== t.data.manifest.id), this.wallets.unshift(new C(this, t.data.manifest)), this.events.emit("selector:walletsChanged", {}), this.autoConnect && this.connect({ walletId: t.data.manifest.id }));
     })), this.whenManifestLoaded.then(() => {
       typeof window < "u" && window.parent.postMessage({ type: "near-selector-ready" }, "*"), this.manifest.wallets.forEach((t) => this.registerWallet(t)), this.storage.get("debug-wallets").then((t) => {
-        JSON.parse(t ?? "[]").forEach((s) => this.registerDebugWallet(s));
+        JSON.parse(t ?? "[]").forEach((o) => this.registerDebugWallet(o));
       });
     });
   }
   get availableWallets() {
-    return this.wallets.filter((t) => Object.entries(this.features).every(([n, s]) => !(s && !t.manifest.features?.[n]))).filter((t) => !(this.network === "testnet" && !t.manifest.features?.testnet));
+    return this.wallets.filter((t) => Object.entries(this.features).every(([n, o]) => !(o && !t.manifest.features?.[n]))).filter((t) => !(this.network === "testnet" && !t.manifest.features?.testnet));
   }
   _handleNearWalletInjected = (e) => {
     this.wallets = this.wallets.filter((t) => t.manifest.id !== e.detail.manifest.id), this.wallets.unshift(new W(this, e.detail)), this.events.emit("selector:walletsChanged", {});
@@ -1686,9 +1706,9 @@ class F {
   async _loadManifest(e) {
     const t = e ? [e] : T;
     for (const n of t) {
-      const s = await fetch(n).catch(() => null);
-      if (!(!s || !s.ok))
-        return await s.json();
+      const o = await fetch(n).catch(() => null);
+      if (!(!o || !o.ok))
+        return await o.json();
     }
     throw new Error("Failed to load manifest");
   }
@@ -1711,9 +1731,9 @@ class F {
     if (!t.executor) throw new Error("Manifest must have an executor");
     if (!t.features) throw new Error("Manifest must have features");
     if (!t.permissions) throw new Error("Manifest must have permissions");
-    if (this.wallets.find((s) => s.manifest.id === t.id)) throw new Error("Wallet already registered");
+    if (this.wallets.find((o) => o.manifest.id === t.id)) throw new Error("Wallet already registered");
     t.debug = !0, this.wallets.unshift(new y(this, t)), this.events.emit("selector:walletsChanged", {});
-    const n = this.wallets.filter((s) => s.manifest.debug).map((s) => s.manifest);
+    const n = this.wallets.filter((o) => o.manifest.debug).map((o) => o.manifest);
     return this.storage.set("debug-wallets", JSON.stringify(n)), t;
   }
   async removeDebugWallet(e) {
@@ -1724,15 +1744,15 @@ class F {
   async selectWallet({ features: e = {} } = {}) {
     return await this.whenManifestLoaded.catch(() => {
     }), new Promise((t, n) => {
-      const s = new D({
+      const o = new D({
         footer: this.footerBranding,
-        wallets: this.availableWallets.filter(O(e)).map((o) => o.manifest),
-        onRemoveDebugManifest: async (o) => this.removeDebugWallet(o),
-        onAddDebugManifest: async (o) => this.registerDebugWallet(o),
-        onReject: () => (n(new Error("User rejected")), s.destroy()),
-        onSelect: (o) => (t(o), s.destroy())
+        wallets: this.availableWallets.filter(O(e)).map((s) => s.manifest),
+        onRemoveDebugManifest: async (s) => this.removeDebugWallet(s),
+        onAddDebugManifest: async (s) => this.registerDebugWallet(s),
+        onReject: () => (n(new Error("User rejected")), o.destroy()),
+        onSelect: (s) => (t(s), o.destroy())
       });
-      s.create();
+      o.create();
     });
   }
   async connect(e = {}) {
@@ -1741,18 +1761,18 @@ class F {
     await this.whenManifestLoaded.catch(() => {
     }), t || (t = await this.selectWallet(e.signMessageParams != null ? { features: { signInAndSignMessage: !0 } } : void 0));
     try {
-      const s = await this.wallet(t);
-      if (this.logger?.log("Wallet available to connect", s), await this.storage.set("selected-wallet", t), this.logger?.log(`Set preferred wallet, try to signIn${n != null ? " (with signed message)" : ""}`, t), n != null) {
-        const o = await s.signInAndSignMessage({
+      const o = await this.wallet(t);
+      if (this.logger?.log("Wallet available to connect", o), await this.storage.set("selected-wallet", t), this.logger?.log(`Set preferred wallet, try to signIn${n != null ? " (with signed message)" : ""}`, t), n != null) {
+        const s = await o.signInAndSignMessage({
           contractId: this.signInData?.contractId,
           methodNames: this.signInData?.methodNames,
           messageParams: n,
           network: this.network
         });
-        if (!o?.length) throw new Error("Failed to sign in");
-        this.logger?.log("Signed in to wallet (with signed message)", t, o), this.events.emit("wallet:signInAndSignMessage", { wallet: s, accounts: o, success: !0 }), this.events.emit("wallet:signIn", {
-          wallet: s,
-          accounts: o.map((a) => ({
+        if (!s?.length) throw new Error("Failed to sign in");
+        this.logger?.log("Signed in to wallet (with signed message)", t, s), this.events.emit("wallet:signInAndSignMessage", { wallet: o, accounts: s, success: !0 }), this.events.emit("wallet:signIn", {
+          wallet: o,
+          accounts: s.map((a) => ({
             accountId: a.accountId,
             publicKey: a.publicKey
           })),
@@ -1760,17 +1780,17 @@ class F {
           source: "signInAndSignMessage"
         });
       } else {
-        const o = await s.signIn({
+        const s = await o.signIn({
           contractId: this.signInData?.contractId,
           methodNames: this.signInData?.methodNames,
           network: this.network
         });
-        if (!o?.length) throw new Error("Failed to sign in");
-        this.logger?.log("Signed in to wallet", t, o), this.events.emit("wallet:signIn", { wallet: s, accounts: o, success: !0, source: "signIn" });
+        if (!s?.length) throw new Error("Failed to sign in");
+        this.logger?.log("Signed in to wallet", t, s), this.events.emit("wallet:signIn", { wallet: o, accounts: s, success: !0, source: "signIn" });
       }
-      return s;
-    } catch (s) {
-      throw this.logger?.log("Failed to connect to wallet", s), s;
+      return o;
+    } catch (o) {
+      throw this.logger?.log("Failed to connect to wallet", o), o;
     }
   }
   async disconnect(e) {
@@ -1779,7 +1799,7 @@ class F {
   async getConnectedWallet() {
     await this.whenManifestLoaded.catch(() => {
     });
-    const e = await this.storage.get("selected-wallet"), t = this.wallets.find((s) => s.manifest.id === e);
+    const e = await this.storage.get("selected-wallet"), t = this.wallets.find((o) => o.manifest.id === e);
     if (!t) throw new Error("No wallet selected");
     const n = await t.getAccounts();
     if (!n?.length) throw new Error("No accounts found");
@@ -1798,10 +1818,10 @@ class F {
   async use(e) {
     await this.whenManifestLoaded.catch(() => {
     }), this.wallets = this.wallets.map((t) => new Proxy(t, {
-      get(n, s, o) {
-        const a = Reflect.get(n, s, o);
-        if (s in e && typeof a == "function") {
-          const i = e[s];
+      get(n, o, s) {
+        const a = Reflect.get(n, o, s);
+        if (o in e && typeof a == "function") {
+          const i = e[o];
           return function(...l) {
             const c = () => a.apply(n, l);
             return l.length > 0 ? i.call(this, ...l, c) : i.call(this, void 0, c);
@@ -1814,8 +1834,8 @@ class F {
   async addFunctionCallKey(e) {
     const t = await this.wallet(), n = await t.getAccounts({ network: e.network || this.network });
     if (!n?.length) throw new Error("Not signed in");
-    const s = e.signerId || n[0].accountId;
-    return t.addFunctionCallKey({ ...e, signerId: s, network: e.network || this.network });
+    const o = e.signerId || n[0].accountId;
+    return t.addFunctionCallKey({ ...e, signerId: o, network: e.network || this.network });
   }
   on(e, t) {
     this.events.on(e, t);
@@ -1836,5 +1856,5 @@ export {
   F as NearConnector,
   C as ParentFrameWallet,
   y as SandboxWallet,
-  u as nearActionsToConnectorActions
+  w as nearActionsToConnectorActions
 };
