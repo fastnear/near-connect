@@ -7,8 +7,18 @@ async function getIframeCode(args: { id: string; executor: SandboxExecutor; code
   const manifest = args.executor.manifest;
   const uuid = args.id;
 
+  // Two-layer localStorage proxy strategy:
+  // 1. Text replacement (below): rewrites executor source at build time.
+  //    Handles the common case but misses bracket notation, Reflect, and
+  //    library-internal introspection (e.g. SES lockdown).
+  // 2. Object.defineProperty (in iframe <script>): runtime override that
+  //    catches all access patterns. See the sandboxedLocalStorage block.
+  // Both are needed: defineProperty could silently fail if a browser makes
+  // the property non-configurable, and the regex can't reach dynamic access.
   const code = args.code
     .replaceAll(".localStorage", ".sandboxedLocalStorage")
+    // Catches bare `localStorage` references (e.g. from WalletConnect SDK) not matched by the `.localStorage` replacement above
+    .replaceAll(/(?<![.\w])localStorage(?=[\.\[\(])/g, "window.sandboxedLocalStorage")
     .replaceAll("window.top", "window.selector")
     .replaceAll("window.open", "window.selector.open");
 
@@ -102,6 +112,33 @@ async function getIframeCode(args: { id: string; executor: SandboxExecutor; code
 
 
       <script>
+      window.addEventListener("error", function(event) {
+        var msg = event.message + (event.filename ? " at " + event.filename + ":" + event.lineno : "");
+        console.error("[near-connect iframe] error:", msg);
+        window.parent.postMessage({
+          method: "wallet-error",
+          origin: "${uuid}",
+          error: msg
+        }, "*");
+      });
+      window.addEventListener("unhandledrejection", function(event) {
+        console.error("[near-connect iframe] unhandledrejection:", String(event.reason));
+        window.parent.postMessage({
+          method: "wallet-error",
+          origin: "${uuid}",
+          error: String(event.reason)
+        }, "*");
+      });
+      </script>
+
+      <script>
+      // Fix fetch binding in sandboxed iframe — bundled code that aliases
+      // or destructures fetch loses the window context, causing
+      // "Failed to execute 'fetch' on 'Window': Illegal invocation".
+      if (typeof fetch === 'function') {
+        window.fetch = fetch.bind(window);
+      }
+
       window.sandboxedLocalStorage = (() => {
         let storage = ${JSON.stringify(storage)}
 
@@ -126,6 +163,18 @@ async function getIframeCode(args: { id: string; executor: SandboxExecutor; code
           },
         };
       })();
+
+      // Override the localStorage property so that any access pattern
+      // (including SES lockdown introspection) returns the proxy
+      // instead of throwing a SecurityError in the sandboxed iframe.
+      try {
+        Object.defineProperty(window, 'localStorage', {
+          get: function() { return window.sandboxedLocalStorage; },
+          configurable: true,
+        });
+      } catch (e) {
+        // Silently ignore if the property can't be redefined
+      }
 
       const showPrompt = async (args) => {
         const root = document.getElementById("root");   
@@ -201,20 +250,8 @@ async function getIframeCode(args: { id: string; executor: SandboxExecutor; code
         },
 
         walletConnect: {
-          connect(params) {
-            return window.selector.call("walletConnect.connect", params);
-          },
-          disconnect(params) {
-            return window.selector.call("walletConnect.disconnect", params);
-          },
-          request(params) {
-            return window.selector.call("walletConnect.request", params);
-          },
-          getProjectId() {
-            return window.selector.call("walletConnect.getProjectId", {});
-          },
-          getSession() {
-            return window.selector.call("walletConnect.getSession", {});
+          getConfig() {
+            return window.selector.call("walletConnect.getConfig", {});
           },
         },
       
@@ -310,6 +347,11 @@ async function getIframeCode(args: { id: string; executor: SandboxExecutor; code
         }
         
         try {
+          // Ensure signerId is available in sandboxedLocalStorage for wallet code that reads it
+          if (event.data.params?.signerId) {
+            window.sandboxedLocalStorage.setItem("signedAccountId", event.data.params.signerId);
+          }
+
           const result = await wallet[method](event.data.params);
           window.parent.postMessage({ ...payload, status: "success", result }, "*");
         } catch (error) {

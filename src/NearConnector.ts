@@ -11,9 +11,11 @@ import type {
   WalletFeatures,
   Logger,
   NearWalletBase,
-  AbstractWalletConnect,
+  WalletConnectConfig,
   FooterBranding,
   NearConnector_ConnectOptions,
+  AddFunctionCallKeyParams,
+  AddFunctionCallKeyResult,
 } from "./types";
 import type { WalletPlugin } from "./types/plugin";
 
@@ -29,14 +31,14 @@ interface NearConnectorOptions {
   network?: Network;
 
   manifest?: string | { wallets: WalletManifest[]; version: string };
-  walletConnect?: Promise<AbstractWalletConnect> | AbstractWalletConnect;
+  walletConnect?: WalletConnectConfig;
 
   events?: EventEmitter<EventMap>;
   storage?: DataStorage;
   logger?: Logger;
 
   /**
-   * Footer branding for the wallet selector popup. If not provided, default branding will be used. If provided null, footer will be hidden.
+   * Footer branding for the wallet selector popup. Hidden by default. Provide a FooterBranding object to show it.
    */
   footerBranding?: FooterBranding | null;
 
@@ -51,8 +53,8 @@ interface NearConnectorOptions {
 }
 
 const defaultManifests = [
-  "https://raw.githubusercontent.com/hot-dao/near-selector/refs/heads/main/repository/manifest.json",
-  "https://cdn.jsdelivr.net/gh/azbang/hot-connector/repository/manifest.json",
+  "https://raw.githubusercontent.com/fastnear/near-connect/refs/heads/main/repository/manifest.json",
+  "https://cdn.jsdelivr.net/gh/fastnear/near-connect/repository/manifest.json",
 ];
 
 function createFilterForWalletFeatures(features: Partial<WalletFeatures>) {
@@ -77,7 +79,7 @@ export class NearConnector {
 
   providers: { mainnet?: string[]; testnet?: string[] } = { mainnet: [], testnet: [] };
   signInData?: { contractId?: string; methodNames?: Array<string> };
-  walletConnect?: Promise<AbstractWalletConnect> | AbstractWalletConnect;
+  walletConnect?: WalletConnectConfig;
 
   footerBranding: FooterBranding | null;
   excludedWallets: string[] = [];
@@ -103,16 +105,7 @@ export class NearConnector {
 
     this.signInData = options?.signIn;
 
-    if (options?.footerBranding !== undefined) {
-      this.footerBranding = options?.footerBranding;
-    } else {
-      this.footerBranding = {
-        icon: "https://pages.near.org/wp-content/uploads/2023/11/NEAR_token.png",
-        heading: "NEAR Connector",
-        link: "https://wallet.near.org",
-        linkText: "Don't have a wallet?",
-      };
-    }
+    this.footerBranding = options?.footerBranding ?? null;
 
     this.whenManifestLoaded = new Promise(async (resolve) => {
       if (options?.manifest == null || typeof options.manifest === "string") {
@@ -373,6 +366,14 @@ export class NearConnector {
         },
       }) as NearWalletBase;
     });
+  }
+
+  async addFunctionCallKey(params: Omit<AddFunctionCallKeyParams, "signerId"> & { signerId?: string }): Promise<AddFunctionCallKeyResult> {
+    const wallet = await this.wallet();
+    const accounts = await wallet.getAccounts({ network: params.network || this.network });
+    if (!accounts?.length) throw new Error("Not signed in");
+    const signerId = params.signerId || accounts[0].accountId;
+    return wallet.addFunctionCallKey({ ...params, signerId, network: params.network || this.network });
   }
 
   on<K extends keyof EventMap>(event: K, callback: (payload: EventMap[K]) => void): void {

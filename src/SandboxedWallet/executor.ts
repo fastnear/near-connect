@@ -91,7 +91,10 @@ class SandboxExecutor {
 
     if (event.data.method === "storage.keys") {
       this.assertPermissions(iframe, "storage", event);
-      const keys = Object.keys(localStorage).filter((key) => key.startsWith(`${this.storageSpace}:`));
+      const prefix = `${this.storageSpace}:`;
+      const keys = Object.keys(localStorage)
+        .filter((key) => key.startsWith(prefix))
+        .map((key) => key.slice(prefix.length));
       success(keys);
       return;
     }
@@ -126,62 +129,11 @@ class SandboxExecutor {
       return;
     }
 
-    if (event.data.method === "walletConnect.connect") {
+    if (event.data.method === "walletConnect.getConfig") {
       this.assertPermissions(iframe, "walletConnect", event);
       try {
         if (!this.connector.walletConnect) throw new Error("WalletConnect is not configured");
-        const client = await this.connector.walletConnect;
-        const result = await client.connect(event.data.params);
-        result.approval();
-        success({ uri: result.uri });
-      } catch (e) {
-        failed(e);
-      }
-      return;
-    }
-
-    if (event.data.method === "walletConnect.getProjectId") {
-      if (!this.connector.walletConnect) throw new Error("WalletConnect is not configured");
-      this.assertPermissions(iframe, "walletConnect", event);
-      const client = await this.connector.walletConnect;
-      success(client.core.projectId);
-      return;
-    }
-
-    if (event.data.method === "walletConnect.disconnect") {
-      this.assertPermissions(iframe, "walletConnect", event);
-      try {
-        if (!this.connector.walletConnect) throw new Error("WalletConnect is not configured");
-        const client = await this.connector.walletConnect;
-        const result = await client.disconnect(event.data.params);
-        success(result);
-      } catch (e) {
-        failed(e);
-      }
-      return;
-    }
-
-    if (event.data.method === "walletConnect.getSession") {
-      this.assertPermissions(iframe, "walletConnect", event);
-      try {
-        if (!this.connector.walletConnect) throw new Error("WalletConnect is not configured");
-        const client = await this.connector.walletConnect;
-        const key = client.session.keys[client.session.keys.length - 1];
-        const session = key ? client.session.get(key) : null;
-        success(session ? { topic: session.topic, namespaces: session.namespaces } : null);
-      } catch (e) {
-        failed(e);
-      }
-      return;
-    }
-
-    if (event.data.method === "walletConnect.request") {
-      this.assertPermissions(iframe, "walletConnect", event);
-      try {
-        if (!this.connector.walletConnect) throw new Error("WalletConnect is not configured");
-        const client = await this.connector.walletConnect;
-        const result = await client.request(event.data.params);
-        success(result);
+        success(this.connector.walletConnect);
       } catch (e) {
         failed(e);
       }
@@ -306,18 +258,48 @@ class SandboxExecutor {
   }
 
   async call<T>(method: string, params: any): Promise<T> {
+    console.log(`[near-connect] call("${method}") on "${this.manifest.name}"`);
+
+    // Inject signerId into storage so wallet executors find it in sandboxedLocalStorage
+    if (params?.signerId) {
+      localStorage.setItem(`${this.storageSpace}:signedAccountId`, params.signerId);
+    }
+
     this.connector.logger?.log(`Add to queue`, method, params);
 
     // return this.queue.enqueue(async () => {
     this.connector.logger?.log(`Calling method`, method, params);
 
     const code = await this.loadCode();
-    this.connector.logger?.log(`Code loaded, preparing`);
+    this.connector.logger?.log(`Code loaded, preparing (${code.length} bytes)`);
+
+    // Maximum time to wait for a wallet executor to call window.selector.ready().
+    // This is the *fallback* timeout — most crashes are caught much faster by the
+    // in-iframe error reporter (wallet-error postMessage). The 5s ceiling covers
+    // edge cases where the executor script itself fails to load (e.g., network
+    // timeout on the raw.githubusercontent.com fetch) so neither ready() nor the
+    // error reporter ever fire.
+    const READY_TIMEOUT_MS = 5_000;
 
     const iframe = new IframeExecutor(this, code, this._onMessage);
     this.connector.logger?.log(`Code loaded, iframe initialized`);
 
-    await iframe.readyPromise;
+    let timeoutId: ReturnType<typeof setTimeout>;
+    try {
+      await Promise.race([
+        iframe.readyPromise,
+        new Promise<never>((_, reject) => {
+          timeoutId = setTimeout(() => reject(new Error(
+            `Wallet executor "${this.manifest.name}" did not initialize within ${READY_TIMEOUT_MS / 1000}s`
+          )), READY_TIMEOUT_MS);
+        }),
+      ]);
+    } catch (e) {
+      iframe.dispose();
+      throw e;
+    } finally {
+      clearTimeout(timeoutId!);
+    }
     this.connector.logger?.log(`Iframe ready`);
 
     const id = uuid4();
@@ -330,8 +312,13 @@ class SandboxExecutor {
           window.removeEventListener("message", handler);
           this.connector.logger?.log("postMessage", { result: event.data, request: { method, params } });
 
-          if (event.data.status === "failed") reject(event.data.result);
-          else resolve(event.data.result);
+          if (event.data.status === "failed") {
+            console.warn(`[near-connect] call("${method}") on "${this.manifest.name}" FAILED:`, event.data.result);
+            reject(event.data.result);
+          } else {
+            console.log(`[near-connect] call("${method}") on "${this.manifest.name}" succeeded`);
+            resolve(event.data.result);
+          }
         };
 
         window.addEventListener("message", handler);

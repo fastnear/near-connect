@@ -2,9 +2,11 @@
 
 ![ezgif-26d74832f88c3c](https://github.com/user-attachments/assets/c4422057-38bb-4cd9-8bd0-568e29f46280)
 
-Zero-dependenices, robust, secure and lightweight wallet connector for the NEAR blockchain with **easily updatable** wallets code
+This is a FastNear fork of the MIT licensed https://github.com/azbang/near-connect that makes modifications such that a function-call access key can reside in local storage and not prompt the end user to sign each time. Every transaction that contains a non-zero deposit still triggers the wallet confirmation.
 
-`yarn add @hot-labs/near-connect`
+Zero-dependency, robust, secure and lightweight wallet connector for the NEAR blockchain with **easily updatable** wallets code
+
+`yarn add @fastnear/near-connect`
 
 ## How it works
 
@@ -26,7 +28,7 @@ Unlike near-wallet-selector, this library provides a secure execution environmen
 ## Dapp integration
 
 ```ts
-import { NearConnector } from "@hot-labs/near-connect";
+import { NearConnector } from "@fastnear/near-connect";
 
 const connector = new NearConnector();
 
@@ -77,7 +79,7 @@ Some wallets only work when you pass WalletConnect sign client to NearConnector,
 import SignClient from "@walletconnect/sign-client";
 const walletConnect = SignClient.init({ projectId: "...", metadata: {} });
 
-import { NearConnector } from "@hot-labs/near-connect";
+import { NearConnector } from "@fastnear/near-connect";
 const connector = new NearConnector({ walletConnect });
 ```
 
@@ -87,7 +89,50 @@ const connector = new NearConnector({ walletConnect });
 new NearConnector({ signIn: { contractId: "game.near", methods: ["action"] } });
 ```
 
-Some wallets allow adding a limited-access key to a contract as soon as the user connects their wallet. This enables the app to sign non-payable transactions without requiring wallet approval each time. However, this approach requires the user to submit an on-chain transaction during the initial connection, which may negatively affect the user experience. A better practice is to add the limited-access key after the user has already begun actively interacting with your application.
+Some wallets allow adding a limited-access key to a contract as soon as the user connects their wallet. This enables the app to sign non-payable transactions without requiring wallet approval each time. However, this approach requires the user to submit an on-chain transaction during the initial connection, which may negatively affect the user experience. A better practice is to add the limited-access key after the user has already begun actively interacting with your application — see `addFunctionCallKey` below.
+
+## Add function-call access key after sign-in (recommended)
+
+Instead of adding a key during sign-in, use `addFunctionCallKey` after the user has started interacting with your app. This avoids the on-chain transaction at sign-in time and provides a better UX.
+
+```ts
+const connector = new NearConnector();
+await connector.connect();
+
+// When the user starts interacting, add a function-call access key:
+const result = await connector.addFunctionCallKey({
+  contractId: "game.near",
+  methodNames: ["play_turn", "claim_reward"], // optional, empty = all methods
+  allowance: "250000000000000000000000", // optional, 0.25 NEAR
+});
+
+// Now zero-deposit function calls are signed locally (no popup):
+const wallet = await connector.wallet();
+await wallet.signAndSendTransaction({
+  receiverId: "game.near",
+  actions: [
+    {
+      type: "FunctionCall",
+      params: {
+        methodName: "play_turn",
+        args: {},
+        gas: "30000000000000",
+        deposit: "0",
+      },
+    },
+  ],
+});
+```
+
+The user approves one wallet popup (the `AddKey` transaction), and all subsequent zero-deposit function calls to the specified contract are signed locally with no popup.
+
+Wallets that support this feature declare `addFunctionCallKey: true` in their manifest. You can filter for compatible wallets:
+
+```ts
+const connector = new NearConnector({
+  features: { addFunctionCallKey: true },
+});
+```
 
 ## SignAndSendTransaction format actions
 
@@ -222,6 +267,32 @@ window.addEventListener("near-selector-ready", () => {
 });
 ```
 
+## Executor timeout and error reporting
+
+Wallet executors run in sandboxed `about:srcdoc` iframes. When an executor is loaded, the library awaits a `readyPromise` that resolves when the executor calls `window.selector.ready(wallet)`. If the executor crashes before calling `ready()` (e.g., a `SecurityError` from `localStorage` access under SES lockdown), the promise would hang indefinitely, blocking `restore()` and leaving the UI stuck.
+
+Three layers of defense prevent this:
+
+1. **In-iframe error reporter** (`SandboxedWallet/code.ts`): A `<script>` block injected before all other scripts installs `error` and `unhandledrejection` listeners that post a `wallet-error` message to the parent with the error details. This gives **fast failure with a diagnostic message** instead of a silent wait.
+
+2. **readyPromise rejection** (`SandboxedWallet/iframe.ts`): The `IframeExecutor` handles `wallet-error` messages by rejecting `readyPromise` with the crash reason, so the caller gets an immediate, descriptive error.
+
+3. **Timeout fallback** (`SandboxedWallet/executor.ts`): A 5-second `Promise.race` catches cases where even the error reporter fails (e.g., the script never loads). The timeout is cleaned up via `clearTimeout` in a `finally` block to prevent dangling timers and unhandled rejections on the happy path.
+
+### Why this design?
+
+- No browser API can replace the `postMessage` handshake: the iframe `load` event fires before `<script type="module">` executes, and the `error` event only fires for network failures, not JS exceptions.
+- The parent cannot detect errors in a sandboxed iframe (opaque origin, no `contentWindow` access), so the iframe must **self-report** via `postMessage`.
+- `Promise.race` + `setTimeout` is the [standard pattern](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/race) for timing out `postMessage` handshakes. WalletConnect's verify iframe [lacks this and has a known bug](https://github.com/WalletConnect/walletconnect-monorepo/issues/3500) where their iframe hangs connections indefinitely.
+- The dangling timer from `Promise.race` [must be cleared](https://advancedweb.hu/how-to-add-timeout-to-a-promise-in-javascript/) in a `finally` block — otherwise the `setTimeout` stays scheduled on the happy path, eventually calling `reject()` on a settled promise and producing an unhandled rejection.
+
+### References
+
+- [Promise.race() — MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/race)
+- [How to add timeout to a Promise in JavaScript](https://advancedweb.hu/how-to-add-timeout-to-a-promise-in-javascript/) — covers the `finally`/`clearTimeout` pattern
+- [WalletConnect verify iframe failed to load — Issue #3500](https://github.com/WalletConnect/walletconnect-monorepo/issues/3500) — example of a missing timeout causing indefinite hangs
+- [Request/Reply communication between iframe & host](https://gist.github.com/duongphuhiep/a3ed34c7bbd49199337a234e7b48a0d5) — `postMessage` + timeout pattern for iframes
+
 ## Background and future audit scope
 
 Maintaining the current near-wallet-selector takes a lot of time and effort, wallet developers wait a long time to get an update to their connector inside a monolithic code base. After which they can wait months for applications to integrate their wallet into their site or update their frontend to update the wallet connector. This requires a lot of work on the review side of the near-wallet-selector team and STILL does not ensure the security of internal packages that will be installed in applications (for example, RHEA Finance or Near Intents).
@@ -238,6 +309,24 @@ In fact, main target for audit is `src/wallets/near-wallets/SandboxedWallet/*`.
 Additional:
 Auditing `src/helpers` will help assess the correctness of the coding algorithms.
 Auditing `src/popups` will help assess the correctness of interaction with the DOM, the presence of potential XSS attacks.
+
+## Publishing
+
+To publish a new version of `@fastnear/near-connect`:
+
+1. Build the library:
+   ```sh
+   yarn build
+   ```
+
+2. Bump the version in the root `package.json`.
+
+3. Publish to npm:
+   ```sh
+   yarn npm publish --access public --otp 
+   ```
+
+> **Note:** Only `@fastnear/near-connect` is published to npm. The `near-wallets/` package is not published separately — it builds executor scripts into `./repository/` and CDN bundles into `./cdn/`, which are referenced by the manifest.
 
 ## Contributions
 

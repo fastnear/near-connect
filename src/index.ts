@@ -20,4 +20,7 @@ export type {
   SignDelegateActionsParams,
   SignInAndSignMessageParams,
   AccountWithSignedMessage,
+  AddFunctionCallKeyParams,
+  AddFunctionCallKeyResult,
+  WalletConnectConfig,
 } from "./types";

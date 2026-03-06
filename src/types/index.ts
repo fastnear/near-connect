@@ -85,11 +85,6 @@ export interface SignDelegateActionsParams {
   }>;
 }
 
-export interface SignDelegateActionsResponse {
-  // Borsh-serialized base64 strings of "SignedDelegate"
-  signedDelegateActions: string[];
-}
-
 export interface WalletManifest {
   id: string;
   platform: string[];
@@ -113,9 +108,33 @@ export interface WalletFeatures {
   signInWithoutAddKey: boolean;
   signInAndSignMessage: boolean;
   signDelegateActions: boolean;
+  addFunctionCallKey: boolean;
   mainnet: boolean;
   testnet: boolean;
 }
+
+export type SignDelegateActionResult = {
+  delegateHash: Uint8Array;
+  signedDelegate: SignedDelegate;
+};
+
+export interface SignDelegateActionsResponse {
+  signedDelegateActions: SignDelegateActionResult[];
+}
+
+export interface AddFunctionCallKeyParams {
+  contractId: string;
+  methodNames?: Array<string>;
+  allowance?: string;
+  network?: Network;
+  signerId?: string;
+}
+
+export interface AddFunctionCallKeyResult {
+  publicKey: string;
+  transactionOutcome: FinalExecutionOutcome;
+}
+
 
 export interface SignInParams {
   network?: Network;
@@ -162,6 +181,13 @@ export interface NearWalletBase {
   signMessage(params: SignMessageParams): Promise<SignedMessage>;
 
   signDelegateActions(params: SignDelegateActionsParams): Promise<SignDelegateActionsResponse>;
+
+  /**
+   * Adds a function-call access key for the given contract. The wallet generates a keypair,
+   * the user approves an AddKey transaction via the wallet popup, and the private key is stored
+   * locally for future zero-popup signing of zero-deposit function calls.
+   */
+  addFunctionCallKey(params: AddFunctionCallKeyParams): Promise<AddFunctionCallKeyResult>;
 }
 
 export interface EventMap {
@@ -183,18 +209,13 @@ export type WalletEvents = {
   signedOut: null;
 };
 
-export interface AbstractWalletConnect {
-  connect: (params: any) => Promise<{ uri?: string; approval: () => Promise<any> }>;
-  disconnect: (params: any) => Promise<void>;
-  request: (params: any) => Promise<any>;
-
-  session: {
-    keys: string[];
-    get: (key: string) => { topic: string; namespaces: any };
-  };
-
-  core: {
-    projectId?: string;
+export interface WalletConnectConfig {
+  projectId: string;
+  metadata?: {
+    name?: string;
+    description?: string;
+    url?: string;
+    icons?: string[];
   };
 }
 
