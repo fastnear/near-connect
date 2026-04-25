@@ -110,17 +110,40 @@ export class MyNearWalletConnector {
   }
 
   async signOut(): Promise<void> {
-    // Best-practice cleanup: revoke the function-call access key on chain
-    // before deleting the matching private key from localStorage. The FCK
-    // itself can't sign DeleteKey (it's restricted to FunctionCalls), so
-    // this hits the popup path — the user confirms once with their full
-    // wallet key. If the user cancels or the broadcast fails, we still
-    // clear local state so they aren't stuck signed-in on the page.
+    // Best-practice cleanup: revoke every function-call access key on chain
+    // before deleting the matching private keys from localStorage. The FCKs
+    // themselves can't sign DeleteKey (they're restricted to FunctionCalls),
+    // so this hits the popup path — the user confirms once with their full
+    // wallet key. All DeleteKey actions are bundled into one transaction so
+    // the user only sees a single popup even when there are multiple FCKs
+    // (the legacy sign-in key plus any per-contract keys minted later via
+    // `addFunctionCallKey`). If the broadcast fails or the user cancels,
+    // we still clear local state so they aren't stuck signed-in on the page.
     const accountId = this.signedAccountId;
-    const fck = this.functionCallKey;
-    if (accountId && fck?.privateKey) {
+    const publicKeysToDelete: string[] = [];
+    const seenPrivateKeys = new Set<string>();
+
+    const legacyFck = this.functionCallKey;
+    if (legacyFck?.privateKey) {
+      seenPrivateKeys.add(legacyFck.privateKey);
+      publicKeysToDelete.push(publicKeyFromPrivate(legacyFck.privateKey));
+    }
+
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const k = window.localStorage.key(i);
+      if (!k || !k.startsWith("functionCallKey:")) continue;
       try {
-        const publicKey = publicKeyFromPrivate(fck.privateKey);
+        const data = JSON.parse(window.localStorage.getItem(k) || "{}");
+        if (!data?.privateKey || seenPrivateKeys.has(data.privateKey)) continue;
+        seenPrivateKeys.add(data.privateKey);
+        publicKeysToDelete.push(publicKeyFromPrivate(data.privateKey));
+      } catch {
+        // Malformed entry — local cleanup below will purge it regardless.
+      }
+    }
+
+    if (accountId && publicKeysToDelete.length > 0) {
+      try {
         const block = await this.provider.block({ finality: "final" });
         await this.signAndSendTransactionsMNW([{
           signerId: accountId,
@@ -128,11 +151,11 @@ export class MyNearWalletConnector {
           nonce: 0,
           receiverId: accountId,
           blockHash: block.header.hash,
-          actions: [{ type: "DeleteKey", publicKey }],
+          actions: publicKeysToDelete.map((publicKey) => ({ type: "DeleteKey", publicKey })),
         }]);
       } catch (error) {
         // eslint-disable-next-line no-console
-        console.warn("[mnw] failed to delete function-call key on chain (continuing local sign-out)", error);
+        console.warn("[mnw] failed to delete function-call keys on chain (continuing local sign-out)", error);
       }
     }
 

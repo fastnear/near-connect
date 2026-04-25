@@ -1,3 +1,29 @@
+# 0.12.2
+
+- **MNW signOut now revokes every per-contract function-call key on chain,
+  not just the legacy one.** When `addFunctionCallKey()` was added in
+  0.12.0 it could mint per-contract keys stored as
+  `functionCallKey:<contractId>` in the executor's localStorage, but
+  signOut only deleted the singular legacy `functionCallKey` on chain
+  (the local cleanup loop already cleared all of them). After repeated
+  sign-in / sign-out cycles, accounts accumulated orphan
+  `draw`-only keys with no matching local private key. signOut now
+  collects every `functionCallKey:*` private key (plus the legacy one,
+  deduplicated), derives each public key, and bundles all `DeleteKey`
+  actions into a single transaction — so the user still sees just one
+  popup at sign-out, but every key the wallet ever minted gets revoked.
+  Falls back to local-only cleanup if the on-chain broadcast fails.
+- **Cross-wallet scope (acknowledged).** Today only `mnw.ts` mints
+  per-contract FCKs (via `wallet:generateFunctionCallKey` /
+  `wallet:confirmFunctionCallKey` in the executor and the
+  `SandboxedWallet.addFunctionCallKey` orchestration). The other
+  wallet executors (`meteor`, `hot-wallet`, `okx`, `near-mobile`,
+  `nightly`, `wallet-connect`) delegate sign-out to the underlying
+  wallet app or external service and do not maintain a per-contract
+  FCK map of their own — so they have nothing analogous to clean up.
+  When per-contract FCK minting is extended to those wallets, mirror
+  the multi-DeleteKey pattern from `mnw.ts`.
+
 # 0.12.1
 
 - **Fix silent mainnet RPC routing for MNW testnet sessions.** `mnw.ts`
