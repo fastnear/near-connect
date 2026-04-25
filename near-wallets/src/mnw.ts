@@ -8,7 +8,11 @@ import type { PlainTransaction } from "@fastnear/utils";
 import { NearRpc } from "./utils/rpc";
 import { connectorActionsToFastnearActions } from "./utils/action";
 import type { ConnectorAction } from "./utils/action";
-import { hasAccessKeyNonce } from "./utils/accessKey";
+import {
+  hasAccessKeyNonce,
+  findMissingKeyErrorString,
+  isMissingKeyErrorMessage,
+} from "./utils/accessKey";
 
 const DEFAULT_POPUP_WIDTH = 480;
 const DEFAULT_POPUP_HEIGHT = 640;
@@ -279,20 +283,18 @@ export class MyNearWalletConnector {
     // Look up access key nonce from RPC. Retry on "key not yet visible"
     // — covers the race where the user clicks an action immediately after
     // the sign-in redirect, before MNW's AddKey transaction has propagated
-    // to the queried RPC node. The retry feeds both *thrown* not-found
-    // errors and *resolved* responses that lack a usable nonce field
-    // (some adapters return JSON-RPC error envelopes as values). Other
-    // error shapes (network down, signing error) propagate after the
+    // to the queried RPC node. The retry handles three shapes of "not yet
+    // visible": (a) thrown JSON-RPC errors with not-found text, (b) NEAR's
+    // soft-error responses where the result body carries an `error` string
+    // alongside block_hash/block_height (no JSON-RPC error), and (c)
+    // adapter quirks that return a result without any nonce field at all.
+    // Other error shapes (network down, signing error) propagate after the
     // first failure so the caller falls through to the wallet popup.
-    const ACCESS_KEY_RETRIES = 5;
-    const ACCESS_KEY_BACKOFF_MS = 400;
-    const isMissingKeyError = (err: any): boolean => {
-      const msg = (err?.message ?? String(err ?? "")).toLowerCase();
-      return msg.includes("does not exist") ||
-             msg.includes("unknown access key") ||
-             msg.includes("accesskeydoesnotexist") ||
-             msg.includes("no access key");
-    };
+    //
+    // Budget tuned for testnet, where AddKey can take ~3-5 s to be visible
+    // (1.2 s block time × 2-3 blocks plus RPC propagation). 10 × 500 ms = 5 s.
+    const ACCESS_KEY_RETRIES = 10;
+    const ACCESS_KEY_BACKOFF_MS = 500;
     let accessKeyInfo: any;
     let lastErr: unknown = null;
     for (let attempt = 0; attempt <= ACCESS_KEY_RETRIES; attempt++) {
@@ -307,13 +309,19 @@ export class MyNearWalletConnector {
           accessKeyInfo = info;
           break;
         }
-        const preview = (() => {
-          try { return JSON.stringify(info)?.slice(0, 200); } catch { return String(info); }
-        })();
-        lastErr = new Error(`view_access_key returned no nonce (received: ${preview})`);
+        const softErr = findMissingKeyErrorString(info);
+        if (softErr) {
+          lastErr = new Error(`view_access_key: ${softErr}`);
+        } else {
+          const preview = (() => {
+            try { return JSON.stringify(info)?.slice(0, 500); } catch { return String(info); }
+          })();
+          lastErr = new Error(`view_access_key returned no nonce (received: ${preview})`);
+        }
       } catch (err) {
         lastErr = err;
-        if (!isMissingKeyError(err)) throw err;
+        const msg = (err as any)?.message ?? String(err ?? "");
+        if (!isMissingKeyErrorMessage(msg)) throw err;
       }
       if (attempt < ACCESS_KEY_RETRIES) {
         await new Promise((resolve) => setTimeout(resolve, ACCESS_KEY_BACKOFF_MS));
