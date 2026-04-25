@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig, type PluginOption } from "vite";
 import { visualizer } from "rollup-plugin-visualizer";
 import path from "path";
 
@@ -13,13 +13,18 @@ const FASTNEAR_BORSH = path.resolve(
   "../../../fastnear-js-monorepo/packages/borsh/dist/esm/index.js",
 );
 
-export default defineConfig({
-  plugins: [
-    process.env.ANALYZE && visualizer({
+const plugins: PluginOption[] = [];
+if (process.env.ANALYZE) {
+  plugins.push(
+    visualizer({
       filename: `../repository/${pkg}-stats.html`,
       gzipSize: true,
     }),
-  ].filter(Boolean),
+  );
+}
+
+export default defineConfig({
+  plugins,
   root: "./",
   resolve: {
     alias: {

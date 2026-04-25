@@ -1,3 +1,42 @@
+# 0.12.0
+
+- **Per-network storage namespacing.** Wallet executors now read and write
+  storage at `<walletId>:<network>:<key>` instead of `<walletId>:<key>`, and
+  `selected-wallet` is stored as `selected-wallet:<network>`. This unblocks
+  parallel mainnet+testnet sessions on the same page — signing in on one
+  network no longer overwrites the other network's session state.
+- **Backwards-compatible migration.** On first construction of a
+  `NearConnector` and each `SandboxExecutor`, any pre-existing legacy keys
+  (no network segment) are moved to the `mainnet` slot and the legacy keys
+  are removed. Existing users keep their session.
+- `clearStorage(network?)` now scopes deletion to a single network instead
+  of clearing everything for the wallet. `signOut({ network })` passes the
+  argument through, so signing out of testnet leaves a mainnet session
+  untouched.
+- **MyNearWallet manifest entry now lists `testnet` as a supported feature**
+  and includes `https://testnet.mynearwallet.com` in `allowsOpen`. MNW now
+  appears in the testnet wallet picker and the testnet redirect succeeds
+  through the parent-window allowlist.
+- **MNW signOut now revokes the on-chain function-call key.** When a
+  function-call key is present, `signOut` first broadcasts a `DeleteKey`
+  transaction via the wallet popup, then clears local state. If the popup
+  is cancelled, local state still clears (orphan-key risk over a stuck UI).
+- **Local FCK signing in MNW is more resilient.** `signUsingKeyPair` now
+  retries `view_access_key` on both *thrown* not-found errors and *resolved*
+  responses missing a usable nonce (covers the AddKey-not-yet-visible race
+  after sign-in redirect, plus adapter quirks that return error envelopes
+  as values). A clearer `console.error` in `signAndSendTransaction`'s catch
+  makes any future fallback to the wallet popup easy to diagnose.
+- **Shared `requireAccessKeyNonce` guard** in `near-wallets/src/utils/accessKey.ts`
+  is now used by `mnw.ts`, `nightly/helper.ts`, and `wallet-connect.ts` so
+  every site that builds a transaction nonce from a `view_access_key`
+  response fails cleanly on a malformed RPC reply instead of silently
+  producing `NaN` / `BigInt(undefined)` errors.
+- Type-check fixes in `near-wallets/`: explicit return type on
+  WalletConnect's `requestAccounts`, type assertion on
+  `near_signTransactions` results, and `vite.config.ts` plugins typed as
+  `PluginOption[]`.
+
 # 0.10.0
 
 - Add **signInAndSignMessage** method

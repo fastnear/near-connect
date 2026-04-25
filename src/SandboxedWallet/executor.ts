@@ -1,4 +1,4 @@
-import { WalletManifest, WalletPermissions } from "../types";
+import { WalletManifest, WalletPermissions, Network } from "../types";
 import { NearConnector } from "../NearConnector";
 import { parseUrl } from "../helpers/url";
 import { uuid4 } from "../helpers/uuid";
@@ -7,12 +7,76 @@ import IframeExecutor from "./iframe";
 
 const cacheId = uuid4();
 
+const SUPPORTED_NETWORKS: ReadonlyArray<Network> = ["mainnet", "testnet"];
+const LEGACY_MIGRATION_NETWORK: Network = "mainnet";
+// Track manifest ids whose legacy unscoped keys have already been migrated this
+// page load, so multiple SandboxExecutor instances (one per (wallet × network)
+// pair when a page holds parallel-network connectors) don't repeat the work.
+const migratedManifestIds = new Set<string>();
+
 class SandboxExecutor {
   private activePanels: Record<string, Window> = {};
-  readonly storageSpace: string;
 
   constructor(readonly connector: NearConnector, readonly manifest: WalletManifest) {
-    this.storageSpace = manifest.id;
+    this.migrateLegacyStorage();
+  }
+
+  /**
+   * Storage namespace for proxied iframe localStorage keys, scoped to
+   * `${manifestId}:${network}`. Each network gets its own slot so signing
+   * into mainnet and testnet on the same page doesn't collide.
+   *
+   * Reads `connector.network` live so that `connector.switchNetwork(...)`
+   * (which mutates `connector.network`) immediately retargets storage to
+   * the new network's slot for subsequent calls.
+   */
+  get storageSpace(): string {
+    return `${this.manifest.id}:${this.connector.network}`;
+  }
+
+  private prefixForNetwork(network: Network): string {
+    return `${this.manifest.id}:${network}:`;
+  }
+
+  /**
+   * One-shot migration of pre-network-namespaced keys.
+   *
+   * Old shape: `${manifestId}:${key}` (single colon).
+   * New shape: `${manifestId}:${network}:${key}` (network segment).
+   *
+   * Any legacy key (matches `${manifestId}:` but not `${manifestId}:mainnet:`
+   * or `${manifestId}:testnet:`) is moved into the mainnet slot — that's the
+   * only network the unscoped library could meaningfully have written for.
+   */
+  private migrateLegacyStorage() {
+    if (typeof localStorage === "undefined") return;
+    if (migratedManifestIds.has(this.manifest.id)) return;
+    migratedManifestIds.add(this.manifest.id);
+
+    const idColon = `${this.manifest.id}:`;
+    const namespacedPrefixes = SUPPORTED_NETWORKS.map((n) => this.prefixForNetwork(n));
+    const moves: Array<{ from: string; to: string }> = [];
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key || !key.startsWith(idColon)) continue;
+      if (namespacedPrefixes.some((p) => key.startsWith(p))) continue;
+      const tail = key.slice(idColon.length);
+      moves.push({
+        from: key,
+        to: `${this.prefixForNetwork(LEGACY_MIGRATION_NETWORK)}${tail}`,
+      });
+    }
+
+    for (const { from, to } of moves) {
+      // Don't clobber a key that already exists at the target — assume the
+      // newer write is more correct and drop the legacy one.
+      if (localStorage.getItem(to) === null) {
+        const value = localStorage.getItem(from);
+        if (value !== null) localStorage.setItem(to, value);
+      }
+      localStorage.removeItem(from);
+    }
   }
 
   checkPermissions(action: keyof WalletPermissions, params?: { url?: string; entity?: string }) {
@@ -260,9 +324,14 @@ class SandboxExecutor {
   async call<T>(method: string, params: any): Promise<T> {
     console.log(`[near-connect] call("${method}") on "${this.manifest.name}"`);
 
-    // Inject signerId into storage so wallet executors find it in sandboxedLocalStorage
+    // Inject signerId into storage so wallet executors find it in sandboxedLocalStorage.
+    // Use the call's network (set by SandboxedWallet/index.ts methods) when available
+    // so cross-network calls land in the right per-network slot.
     if (params?.signerId) {
-      localStorage.setItem(`${this.storageSpace}:signedAccountId`, params.signerId);
+      const callNetwork: Network = params?.network && SUPPORTED_NETWORKS.includes(params.network)
+        ? params.network
+        : this.connector.network;
+      localStorage.setItem(`${this.prefixForNetwork(callNetwork)}signedAccountId`, params.signerId);
     }
 
     this.connector.logger?.log(`Add to queue`, method, params);
@@ -332,19 +401,21 @@ class SandboxExecutor {
     // });
   }
 
-  async getAllStorage() {
-    const keys = Object.keys(localStorage).filter((key) => key.startsWith(`${this.storageSpace}:`));
+  async getAllStorage(network?: Network) {
+    const prefix = this.prefixForNetwork(network ?? this.connector.network);
+    const keys = Object.keys(localStorage).filter((key) => key.startsWith(prefix));
     const storage: Record<string, any> = {};
 
     for (const key of keys) {
-      storage[key.replace(`${this.storageSpace}:`, "")] = localStorage.getItem(key);
+      storage[key.slice(prefix.length)] = localStorage.getItem(key);
     }
 
     return storage;
   }
 
-  async clearStorage() {
-    const keys = Object.keys(localStorage).filter((key) => key.startsWith(`${this.storageSpace}:`));
+  async clearStorage(network?: Network) {
+    const prefix = this.prefixForNetwork(network ?? this.connector.network);
+    const keys = Object.keys(localStorage).filter((key) => key.startsWith(prefix));
     for (const key of keys) {
       localStorage.removeItem(key);
     }

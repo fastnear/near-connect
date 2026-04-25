@@ -4,6 +4,7 @@ import type { PlainTransaction } from "@fastnear/utils";
 import { NearRpc } from "../utils/rpc";
 import { connectorActionsToFastnearActions } from "../utils/action";
 import type { ConnectorAction } from "../utils/action";
+import { requireAccessKeyNonce } from "../utils/accessKey";
 
 export const signAndSendTransactionsHandler = async (
   transactions: { signerId: string; receiverId: string; actions: ConnectorAction[] }[],
@@ -24,11 +25,12 @@ export const signAndSendTransactionsHandler = async (
       }),
     ]);
 
+    const baseNonce = requireAccessKeyNonce(accessKey, "nightly view_access_key");
     const plainTx: PlainTransaction = {
       signerId: transactions[i].signerId,
       publicKey,
       receiverId: transactions[i].receiverId,
-      nonce: accessKey.nonce + i + 1,
+      nonce: (baseNonce as number) + i + 1,
       blockHash: block.header.hash,
       actions: connectorActionsToFastnearActions(transactions[i].actions),
     };

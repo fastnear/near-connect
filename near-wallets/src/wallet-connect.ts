@@ -6,6 +6,7 @@ import { NearRpc } from "./utils/rpc";
 import { connectorActionsToFastnearActions } from "./utils/action";
 import type { ConnectorAction } from "./utils/action";
 import { createQRSvg } from "./utils/qr";
+import { requireAccessKeyNonce } from "./utils/accessKey";
 
 const WC_METHODS = ["near_signIn", "near_signOut", "near_getAccounts", "near_signTransaction", "near_signTransactions", "near_signMessage"];
 const WC_EVENTS = ["chainChanged", "accountsChanged"];
@@ -234,11 +235,11 @@ const WalletConnect = async () => {
     }));
   };
 
-  const requestAccounts = async (network: string) => {
+  const requestAccounts = async (network: string): Promise<Array<{ accountId: string; publicKey: string }>> => {
     const session = getSession();
     if (!session) throw new Error("No active session");
     const sc = await getClient();
-    return sc.request({
+    const result = await sc.request({
       topic: session.topic,
       chainId: `near:${network}`,
       request: {
@@ -246,6 +247,7 @@ const WalletConnect = async () => {
         params: {},
       },
     });
+    return result as Array<{ accountId: string; publicKey: string }>;
   };
 
   const requestSignMessage = async (
@@ -287,11 +289,12 @@ const WalletConnect = async () => {
       }),
     ]);
 
+    const baseNonce = requireAccessKeyNonce(accessKey, "wallet-connect view_access_key");
     const plainTx: PlainTransaction = {
       signerId: transaction.signerId,
       publicKey: account.publicKey,
       receiverId: transaction.receiverId,
-      nonce: accessKey.nonce + 1,
+      nonce: (baseNonce as number) + 1,
       blockHash: block.header.hash,
       actions: transaction.actions,
     };
@@ -336,11 +339,12 @@ const WalletConnect = async () => {
         public_key: account.publicKey,
       });
 
+      const baseNonce = requireAccessKeyNonce(accessKey, "wallet-connect view_access_key");
       const plainTx: PlainTransaction = {
         signerId: transaction.signerId,
         publicKey: account.publicKey,
         receiverId: transaction.receiverId,
-        nonce: accessKey.nonce + i + 1,
+        nonce: (baseNonce as number) + i + 1,
         blockHash: block.header.hash,
         actions: transaction.actions,
       };
@@ -351,16 +355,16 @@ const WalletConnect = async () => {
     const session = getSession();
     if (!session) throw new Error("No active session");
     const sc = await getClient();
-    const results = await sc.request({
+    const results = (await sc.request({
       topic: session.topic,
       chainId: `near:${network}`,
       request: {
         method: "near_signTransactions",
         params: { transactions: encodedTxs },
       },
-    });
+    })) as Array<unknown>;
 
-    return results.map((result: any) => getSignatureData(result));
+    return results.map((result) => getSignatureData(result));
   };
 
   const requestSignOut = async (network: string) => {

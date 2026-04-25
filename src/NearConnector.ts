@@ -96,6 +96,10 @@ export class NearConnector {
     this.network = options?.network ?? "mainnet";
     this.walletConnect = options?.walletConnect;
 
+    // Fire-and-forget migration of pre-network-namespaced `selected-wallet`
+    // storage. Idempotent — once the legacy key is gone, repeat calls no-op.
+    this._migrateLegacySelectedWallet().catch(() => {});
+
     this.autoConnect = options?.autoConnect ?? true;
     this.providers = options?.providers ?? { mainnet: [], testnet: [] };
 
@@ -250,6 +254,25 @@ export class NearConnector {
     });
   }
 
+  /**
+   * Per-network localStorage key for the user's last picked wallet.
+   * `${network}` segment lets a page hold parallel mainnet+testnet sessions
+   * without one's pick clobbering the other.
+   */
+  private selectedWalletKey(): string {
+    return `selected-wallet:${this.network}`;
+  }
+
+  private async _migrateLegacySelectedWallet(): Promise<void> {
+    const legacy = await this.storage.get("selected-wallet").catch(() => null);
+    if (!legacy) return;
+    const existing = await this.storage.get(`selected-wallet:mainnet`).catch(() => null);
+    if (!existing) {
+      await this.storage.set(`selected-wallet:mainnet`, legacy).catch(() => {});
+    }
+    await this.storage.remove("selected-wallet").catch(() => {});
+  }
+
   async connect(input: NearConnector_ConnectOptions = {}) {
     let walletId = input.walletId;
     const signMessageParams = input.signMessageParams;
@@ -261,7 +284,7 @@ export class NearConnector {
       const wallet = await this.wallet(walletId);
       this.logger?.log(`Wallet available to connect`, wallet);
 
-      await this.storage.set("selected-wallet", walletId);
+      await this.storage.set(this.selectedWalletKey(), walletId);
       this.logger?.log(`Set preferred wallet, try to signIn${signMessageParams != null ? " (with signed message)" : ""}`, walletId);
 
       if (signMessageParams != null) {
@@ -308,13 +331,13 @@ export class NearConnector {
     if (!wallet) wallet = await this.wallet();
     await wallet.signOut({ network: this.network });
 
-    await this.storage.remove("selected-wallet");
+    await this.storage.remove(this.selectedWalletKey());
     this.events.emit("wallet:signOut", { success: true });
   }
 
   async getConnectedWallet() {
     await this.whenManifestLoaded.catch(() => {});
-    const id = await this.storage.get("selected-wallet");
+    const id = await this.storage.get(this.selectedWalletKey());
     const wallet = this.wallets.find((wallet) => wallet.manifest.id === id);
     if (!wallet) throw new Error("No wallet selected");
 
@@ -331,7 +354,7 @@ export class NearConnector {
       return this.getConnectedWallet()
         .then(({ wallet }) => wallet)
         .catch(async () => {
-          await this.storage.remove("selected-wallet");
+          await this.storage.remove(this.selectedWalletKey());
           throw new Error("No accounts found");
         });
     }

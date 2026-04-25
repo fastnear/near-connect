@@ -8,6 +8,7 @@ import type { PlainTransaction } from "@fastnear/utils";
 import { NearRpc } from "./utils/rpc";
 import { connectorActionsToFastnearActions } from "./utils/action";
 import type { ConnectorAction } from "./utils/action";
+import { hasAccessKeyNonce } from "./utils/accessKey";
 
 const DEFAULT_POPUP_WIDTH = 480;
 const DEFAULT_POPUP_HEIGHT = 640;
@@ -93,7 +94,33 @@ export class MyNearWalletConnector {
     return !!this.signedAccountId;
   }
 
-  signOut(): void {
+  async signOut(): Promise<void> {
+    // Best-practice cleanup: revoke the function-call access key on chain
+    // before deleting the matching private key from localStorage. The FCK
+    // itself can't sign DeleteKey (it's restricted to FunctionCalls), so
+    // this hits the popup path — the user confirms once with their full
+    // wallet key. If the user cancels or the broadcast fails, we still
+    // clear local state so they aren't stuck signed-in on the page.
+    const accountId = this.signedAccountId;
+    const fck = this.functionCallKey;
+    if (accountId && fck?.privateKey) {
+      try {
+        const publicKey = publicKeyFromPrivate(fck.privateKey);
+        const block = await this.provider.block({ finality: "final" });
+        await this.signAndSendTransactionsMNW([{
+          signerId: accountId,
+          publicKey: publicKeyFromPrivate(privateKeyFromRandom()),
+          nonce: 0,
+          receiverId: accountId,
+          blockHash: block.header.hash,
+          actions: [{ type: "DeleteKey", publicKey }],
+        }]);
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.warn("[mnw] failed to delete function-call key on chain (continuing local sign-out)", error);
+      }
+    }
+
     this.signedAccountId = "";
     this.functionCallKey = null;
     window.localStorage.removeItem("signedAccountId");
@@ -189,8 +216,16 @@ export class MyNearWalletConnector {
       try {
         return await this.signUsingKeyPair({ signerId: accountId, receiverId, actions, key });
       } catch (error) {
+        // Surface the real reason — silently warning here is what made
+        // the "FCK present but popup still appears" bug invisible.
         // eslint-disable-next-line no-console
-        console.warn("Failed to sign using key pair, falling back to wallet", error);
+        console.error("[mnw] local function-call key signing failed; falling back to wallet popup", {
+          error,
+          network: this.network.networkId,
+          signerId: accountId,
+          receiverId,
+          methodName: actions[0]?.params?.methodName ?? actions[0]?.methodName,
+        });
       }
     }
 
@@ -241,13 +276,52 @@ export class MyNearWalletConnector {
     const signedAccountId = signerId || window.localStorage.getItem("signedAccountId") || this.signedAccountId;
     const publicKey = publicKeyFromPrivate(key.privateKey);
 
-    // Look up access key nonce from RPC
-    const accessKeyInfo: any = await this.provider.query({
-      request_type: "view_access_key",
-      account_id: signedAccountId,
-      public_key: publicKey,
-      finality: "optimistic",
-    });
+    // Look up access key nonce from RPC. Retry on "key not yet visible"
+    // — covers the race where the user clicks an action immediately after
+    // the sign-in redirect, before MNW's AddKey transaction has propagated
+    // to the queried RPC node. The retry feeds both *thrown* not-found
+    // errors and *resolved* responses that lack a usable nonce field
+    // (some adapters return JSON-RPC error envelopes as values). Other
+    // error shapes (network down, signing error) propagate after the
+    // first failure so the caller falls through to the wallet popup.
+    const ACCESS_KEY_RETRIES = 5;
+    const ACCESS_KEY_BACKOFF_MS = 400;
+    const isMissingKeyError = (err: any): boolean => {
+      const msg = (err?.message ?? String(err ?? "")).toLowerCase();
+      return msg.includes("does not exist") ||
+             msg.includes("unknown access key") ||
+             msg.includes("accesskeydoesnotexist") ||
+             msg.includes("no access key");
+    };
+    let accessKeyInfo: any;
+    let lastErr: unknown = null;
+    for (let attempt = 0; attempt <= ACCESS_KEY_RETRIES; attempt++) {
+      try {
+        const info = await this.provider.query({
+          request_type: "view_access_key",
+          account_id: signedAccountId,
+          public_key: publicKey,
+          finality: "optimistic",
+        });
+        if (hasAccessKeyNonce(info)) {
+          accessKeyInfo = info;
+          break;
+        }
+        const preview = (() => {
+          try { return JSON.stringify(info)?.slice(0, 200); } catch { return String(info); }
+        })();
+        lastErr = new Error(`view_access_key returned no nonce (received: ${preview})`);
+      } catch (err) {
+        lastErr = err;
+        if (!isMissingKeyError(err)) throw err;
+      }
+      if (attempt < ACCESS_KEY_RETRIES) {
+        await new Promise((resolve) => setTimeout(resolve, ACCESS_KEY_BACKOFF_MS));
+      }
+    }
+    if (!accessKeyInfo) {
+      throw lastErr instanceof Error ? lastErr : new Error("view_access_key never returned a usable nonce");
+    }
     const nonce = BigInt(accessKeyInfo.nonce) + 1n;
 
     // Get recent block hash
@@ -389,7 +463,7 @@ const MyNearWallet = async () => {
     },
 
     async signOut({ network }: { network: string }) {
-      wallet[network].signOut();
+      await wallet[network].signOut();
     },
 
     async getAccounts({ network }: { network: string }) {

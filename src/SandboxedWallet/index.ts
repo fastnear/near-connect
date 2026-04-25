@@ -43,9 +43,10 @@ export class SandboxWallet {
   }
 
   async signOut(data?: { network?: Network }): Promise<void> {
-    const args = { ...data, network: data?.network || this.connector.network };
+    const network = data?.network || this.connector.network;
+    const args = { ...data, network };
     await this.executor.call("wallet:signOut", args);
-    await this.executor.clearStorage();
+    await this.executor.clearStorage(network);
   }
 
   async getAccounts(data?: { network?: Network }): Promise<Array<Account>> {
