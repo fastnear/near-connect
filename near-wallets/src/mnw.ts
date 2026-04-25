@@ -77,7 +77,18 @@ export class MyNearWalletConnector {
     }
 
     this.walletUrl = walletUrl;
-    this.provider = new NearRpc(window.selector?.providers?.[network.networkId as "mainnet" | "testnet"] || [network.nodeUrl]);
+    // Resolve RPC providers: prefer the connector's explicit per-network list
+    // when present and non-empty, otherwise fall back to the network's
+    // nodeUrl. Important: a plain `||` truthy-check fails here because
+    // `window.selector.providers[network]` defaults to `[]` (empty array,
+    // which is truthy in JS), so `[] || [network.nodeUrl]` returns `[]` and
+    // NearRpc would silently fall through to its hardcoded mainnet default
+    // — routing every testnet RPC call to mainnet. Match the explicit-length
+    // pattern used by meteor.ts and near-mobile/index.ts.
+    const explicitProviders = window.selector?.providers?.[network.networkId as "mainnet" | "testnet"];
+    this.provider = new NearRpc(
+      explicitProviders && explicitProviders.length > 0 ? explicitProviders : [network.nodeUrl]
+    );
     this.signedAccountId = window.localStorage.getItem("signedAccountId") || "";
 
     const functionCallKey = window.localStorage.getItem("functionCallKey");
