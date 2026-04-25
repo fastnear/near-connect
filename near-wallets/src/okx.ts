@@ -16,6 +16,11 @@ const checkExist = async () => {
   }
 };
 
+// OKX wallet integration is mainnet-only by design (no testnet OKX
+// wallet exists for NEAR), so the hardcoded `?.mainnet` here is
+// intentional. Don't replicate this pattern in network-agnostic
+// wallets — see the footgun comment in wallet-connect.ts and the bug
+// fixed in mnw.ts (commit 266d424).
 const provider = new NearRpc(window.selector?.providers?.mainnet);
 
 const okx = async (method: string, ...params: any[]): Promise<any> => {

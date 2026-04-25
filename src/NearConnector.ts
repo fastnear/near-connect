@@ -57,6 +57,19 @@ const defaultManifests = [
   "https://cdn.jsdelivr.net/gh/fastnear/near-connect/repository/manifest.json",
 ];
 
+// Default RPC endpoints exposed to wallet executors via
+// `window.selector.providers`. Populated rather than empty so that
+// executors that read from this object (mnw, meteor, near-mobile,
+// wallet-connect, okx) get a working URL even when the page constructs
+// `NearConnector` with no explicit `providers` override. Earlier this
+// field defaulted to `{ mainnet: [], testnet: [] }`, which caused
+// `mnw.ts` to silently route every testnet RPC call to mainnet — see
+// commit 266d424 in this repo for the full bug story.
+export const DEFAULT_PROVIDERS: { mainnet: string[]; testnet: string[] } = {
+  mainnet: ["https://rpc.mainnet.fastnear.com"],
+  testnet: ["https://rpc.testnet.fastnear.com"],
+};
+
 function createFilterForWalletFeatures(features: Partial<WalletFeatures>) {
   return (wallet: NearWalletBase) => {
     return Object.entries(features).every(([key, value]) => {
@@ -77,7 +90,7 @@ export class NearConnector {
   features: Partial<WalletFeatures> = {};
   network: Network = "mainnet";
 
-  providers: { mainnet?: string[]; testnet?: string[] } = { mainnet: [], testnet: [] };
+  providers: { mainnet?: string[]; testnet?: string[] } = { ...DEFAULT_PROVIDERS };
   signInData?: { contractId?: string; methodNames?: Array<string> };
   walletConnect?: WalletConnectConfig;
 
@@ -101,7 +114,14 @@ export class NearConnector {
     this._migrateLegacySelectedWallet().catch(() => {});
 
     this.autoConnect = options?.autoConnect ?? true;
-    this.providers = options?.providers ?? { mainnet: [], testnet: [] };
+    // Shallow-merge so callers that override only one network still get a
+    // sensible default for the other. An explicit empty array is preserved
+    // (treated as "I really mean no providers") — falls through to the
+    // executor's per-network nodeUrl fallback.
+    this.providers = {
+      ...DEFAULT_PROVIDERS,
+      ...(options?.providers ?? {}),
+    };
 
     this.excludedWallets = options?.excludedWallets ?? [];
 

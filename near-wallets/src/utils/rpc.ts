@@ -43,6 +43,15 @@ export class NearRpc {
   public currentProviderIndex = 0;
   public startTimeout;
 
+  // Footgun: when `providers` is undefined OR an empty array, this
+  // constructor silently falls back to the hardcoded mainnet
+  // `rpcProviders`. That means a caller passing `selector.providers.testnet`
+  // (which historically defaulted to `[]`) would get mainnet RPC for a
+  // testnet session with no warning — exactly the bug fixed in
+  // mnw.ts:80 (commit 266d424). Callers who expect testnet behavior must
+  // pass a non-empty providers list (e.g. `[network.nodeUrl]` as a fallback).
+  // okx.ts and wallet-connect.ts intentionally rely on this default for
+  // mainnet-only operation.
   constructor(providers = rpcProviders, private timeout = 30_000, private triesCountForEveryProvider = 3, private incrementTimout = true) {
     this.currentProviderIndex = 0;
     this.providers = providers.length > 0 ? providers : rpcProviders;

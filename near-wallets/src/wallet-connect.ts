@@ -11,6 +11,13 @@ import { requireAccessKeyNonce } from "./utils/accessKey";
 const WC_METHODS = ["near_signIn", "near_signOut", "near_getAccounts", "near_signTransaction", "near_signTransactions", "near_signMessage"];
 const WC_EVENTS = ["chainChanged", "accountsChanged"];
 
+// FOOTGUN: hardcoded `?.mainnet` regardless of session network. WC
+// transactions on testnet would route their `view_access_key` and
+// `block` queries through this mainnet provider, producing "access key
+// does not exist" errors on testnet sessions. Fixing this requires
+// threading `network` through to a per-call provider construction (or
+// lazy initialization keyed on the active network). Not implemented
+// yet — out of scope for the testnet WC use case until a user hits it.
 const provider = new NearRpc(window.selector?.providers?.mainnet);
 
 interface RetryOptions {

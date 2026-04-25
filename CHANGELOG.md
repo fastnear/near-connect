@@ -1,3 +1,38 @@
+# 0.12.1
+
+- **Fix silent mainnet RPC routing for MNW testnet sessions.** `mnw.ts`
+  was constructing its `NearRpc` provider with a truthy-`||` fallback
+  that didn't account for empty arrays. Combined with `NearConnector`
+  defaulting `providers` to `{ mainnet: [], testnet: [] }`, every
+  testnet RPC call from MNW (`view_access_key`, `block`, `send_tx`)
+  silently routed to mainnet — producing `access key … does not exist
+  while viewing` errors after sign-in even though the testnet
+  function-call key was correctly added on chain. Mainnet sessions
+  worked by coincidence (the buggy fallback happened to land on the
+  right network). Fixed with an explicit length check matching the
+  pattern already in `meteor.ts` and `near-mobile/index.ts`.
+- **Populate `NearConnector.providers` defaults.** `DEFAULT_PROVIDERS`
+  is now exported from `NearConnector.ts` as
+  `{ mainnet: ["https://rpc.mainnet.fastnear.com"],
+    testnet: ["https://rpc.testnet.fastnear.com"] }`, and user-provided
+  `providers` are shallow-merged on top so callers that override only
+  one network still get a sensible default for the other. Removes the
+  underlying enabling condition for the `mnw.ts` bug above.
+- **Tune FCK retry budget for testnet propagation.** Bumped
+  `ACCESS_KEY_RETRIES` 5 → 10 and `ACCESS_KEY_BACKOFF_MS` 400 → 500 ms
+  (5 s total). Testnet AddKey can take ~3-5 s to be visible (1.2 s
+  block time × 2-3 blocks plus RPC propagation).
+- **Detect NEAR's soft-error response shape.** New
+  `findMissingKeyErrorString` in `near-wallets/src/utils/accessKey.ts`
+  recognizes results where the RPC carries an `error` string alongside
+  `block_hash`/`block_height` (no JSON-RPC error). The retry loop
+  treats it the same as a thrown not-found error.
+- **Document the `NearRpc.constructor` silent-mainnet footgun** so
+  future call sites don't repeat the bug. Same comment-trail at the
+  hardcoded `?.mainnet` callsites in `wallet-connect.ts` (flagged as a
+  bug for testnet WC, fix deferred) and `okx.ts` (intentional —
+  mainnet-only by design).
+
 # 0.12.0
 
 - **Per-network storage namespacing.** Wallet executors now read and write
