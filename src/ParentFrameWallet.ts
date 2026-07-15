@@ -1,6 +1,7 @@
 import { nearActionsToConnectorActions } from "./actions";
 import { uuid4 } from "./helpers/uuid";
 import { NearConnector } from "./NearConnector";
+import { prepareDelegateActionsForTransport } from "./helpers/delegateActions";
 import {
   Account,
   FinalExecutionOutcome,
@@ -95,10 +96,7 @@ export class ParentFrameWallet {
   async signDelegateActions(params: SignDelegateActionsParams): Promise<SignDelegateActionsResponse> {
     const args = {
       ...params,
-      delegateActions: params.delegateActions.map((delegateAction) => ({
-        ...delegateAction,
-        actions: nearActionsToConnectorActions(delegateAction.actions),
-      })),
+      delegateActions: prepareDelegateActionsForTransport(params.delegateActions),
       network: params.network || this.connector.network,
     };
 

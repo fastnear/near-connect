@@ -16,6 +16,7 @@ import {
 } from "./types";
 import { NearConnector } from "./NearConnector";
 import { nearActionsToConnectorActions } from "./actions";
+import { prepareDelegateActionsForTransport } from "./helpers/delegateActions";
 
 export class InjectedWallet {
   constructor(readonly connector: NearConnector, readonly wallet: NearWalletBase) { }
@@ -83,10 +84,7 @@ export class InjectedWallet {
   async signDelegateActions(params: SignDelegateActionsParams): Promise<SignDelegateActionsResponse> {
     return this.wallet.signDelegateActions({
       ...params,
-      delegateActions: params.delegateActions.map((delegateAction) => ({
-        ...delegateAction,
-        actions: nearActionsToConnectorActions(delegateAction.actions),
-      })),
+      delegateActions: prepareDelegateActionsForTransport(params.delegateActions),
       network: params.network || this.connector.network,
     });
   }

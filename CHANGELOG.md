@@ -1,3 +1,18 @@
+# 0.13.0
+
+- Add optional `blockHeightTtl` metadata to each delegated action and validate
+  supplied values as positive safe integers before invoking a wallet transport.
+  Requests without the field retain each wallet's existing timeout behavior.
+- Add the optional `signDelegateActionsWithTtl` wallet capability so dApps can
+  require wallets that honor an explicit delegate lifetime. The default wallet
+  manifest does not advertise the capability until live wallet QA is complete.
+- Standardize signed delegate results on the transport-safe
+  `{ borshSerializedBase64 }` shape while retaining bare base64 strings and the
+  legacy `{ delegateHash, signedDelegate }` shape in the public result union.
+- Add Meteor delegated-action signing through `@fastnear/wallet-adapter@^1.4.0`.
+  The executor forwards TTL metadata unchanged and relies on the adapter and
+  wallet to construct and sign the delegate; it does not sign inside the dApp.
+
 # 0.12.2
 
 - **MNW signOut now revokes every per-contract function-call key on chain,

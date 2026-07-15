@@ -1,6 +1,6 @@
 {
   "name": "@fastnear/near-connect",
-  "version": "0.12.2",
+  "version": "0.13.0",
   "type": "commonjs",
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
@@ -24,6 +24,8 @@
     "build": "rm -rf build && yarn pre-build && yarn tsc",
     "prepublish": "yarn build",
     "cdn": "yarn pre-build && vite build",
+    "test": "yarn build && yarn test:types && node --test test/*.test.cjs",
+    "test:types": "tsc --noEmit --strict --skipLibCheck --moduleResolution node --module commonjs --target ESNext test/public-types.ts",
     "type-check": "tsc --noEmit"
   },
   "devDependencies": {
