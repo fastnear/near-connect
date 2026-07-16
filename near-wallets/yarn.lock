@@ -201,13 +201,29 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@fastnear/borsh-schema@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@fastnear/borsh-schema@npm:1.4.0"
+  dependencies:
+    "@fastnear/borsh": "npm:1.4.0"
+  checksum: 10c0/c2e5c50d4f69860ae268f511fac35b66879f7b9b91bf02da41f6e44b35b8ffe81fe043726f0f75ad85e96474042269f86d6c641d90544bd2acf61cbf6be1f44e
+  languageName: node
+  linkType: hard
+
+"@fastnear/borsh@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@fastnear/borsh@npm:1.4.0"
+  checksum: 10c0/b93f21e81385cc81c21dae30abc2c33f997677499718ee39f9029d955bd8247678c384119318fbe13312dd314a024f11ac8fb1b3d4162962633edfdc5f0ded5e
+  languageName: node
+  linkType: hard
+
 "@fastnear/near-wallets@workspace:.":
   version: 0.0.0-use.local
   resolution: "@fastnear/near-wallets@workspace:."
   dependencies:
     "@fastnear/borsh-schema": "npm:^0.9.11"
     "@fastnear/utils": "npm:^0.9.11"
-    "@fastnear/wallet-adapter": "npm:^0.9.11"
+    "@fastnear/wallet-adapter": "npm:^1.4.0"
     "@here-wallet/core": "npm:^3.4.0"
     "@near-js/crypto": "npm:^2.5.1"
     "@near-js/transactions": "npm:^2.5.1"
@@ -224,7 +240,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@fastnear/utils@npm:0.9.11, @fastnear/utils@npm:^0.9.11":
+"@fastnear/utils@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@fastnear/utils@npm:1.4.0"
+  dependencies:
+    "@fastnear/borsh": "npm:1.4.0"
+    "@fastnear/borsh-schema": "npm:1.4.0"
+    "@noble/curves": "npm:=2.0.1"
+    "@noble/hashes": "npm:=2.0.1"
+    base58-js: "npm:=2.0.0"
+    js-base64: "npm:^3.7.7"
+  checksum: 10c0/6e677820b5baa7c7e9e66c6ba01119b2d1ae79966c6057ba39c118244647d04bff530ca4c2ba43b3af43d2a0389c8b2d7814cc61823bec8fb911ef52782ebf7e
+  languageName: node
+  linkType: hard
+
+"@fastnear/utils@npm:^0.9.11":
   version: 0.9.11
   resolution: "@fastnear/utils@npm:0.9.11"
   dependencies:
@@ -239,15 +269,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fastnear/wallet-adapter@npm:^0.9.11":
-  version: 0.9.11
-  resolution: "@fastnear/wallet-adapter@npm:0.9.11"
+"@fastnear/wallet-adapter@npm:^1.4.0":
+  version: 1.4.0
+  resolution: "@fastnear/wallet-adapter@npm:1.4.0"
   dependencies:
-    "@fastnear/borsh-schema": "npm:0.9.11"
-    "@fastnear/utils": "npm:0.9.11"
-    "@noble/curves": "npm:*"
-    borsh: "npm:*"
-  checksum: 10c0/8c0857423606395f122b789d608502e1f14e09d875ad0c83f4e8186b6648a723cdf3e42eaa376e315239c720737b3f3b870c0f371e7e690e9991425fd59c9627
+    "@fastnear/borsh": "npm:1.4.0"
+    "@fastnear/borsh-schema": "npm:1.4.0"
+    "@fastnear/utils": "npm:1.4.0"
+    "@noble/curves": "npm:=2.0.1"
+  checksum: 10c0/2c92849392fe3c1c152721b9e5d58d2e01a0b07cd4edfbf2a3c3fbca5fbaae2c536465a4fb277bc73869f6789f64a171c724430c1511dc6002b942f540e5241d
   languageName: node
   linkType: hard
 
@@ -471,7 +501,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@noble/curves@npm:*, @noble/curves@npm:^2.0.1":
+"@noble/curves@npm:*, @noble/curves@npm:=2.0.1, @noble/curves@npm:^2.0.1":
   version: 2.0.1
   resolution: "@noble/curves@npm:2.0.1"
   dependencies:
@@ -516,7 +546,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@noble/hashes@npm:*, @noble/hashes@npm:2.0.1, @noble/hashes@npm:^2.0.1":
+"@noble/hashes@npm:*, @noble/hashes@npm:2.0.1, @noble/hashes@npm:=2.0.1, @noble/hashes@npm:^2.0.1":
   version: 2.0.1
   resolution: "@noble/hashes@npm:2.0.1"
   checksum: 10c0/e81769ce21c3b1c80141a3b99bd001f17edea09879aa936692ae39525477386d696101cd573928a304806efb2b9fa751e1dd83241c67d0c84d30091e85c79bdb
@@ -1137,6 +1167,13 @@ __metadata:
   version: 3.0.3
   resolution: "base58-js@npm:3.0.3"
   checksum: 10c0/1cbe921d78a7fe2eefbfe31fc2b30f8b737874cd6166b78af6e985286844fab4258a4a5379988bd5a75dc33039309c6ddaf6bd948f818e552377aa11601a0128
+  languageName: node
+  linkType: hard
+
+"base58-js@npm:=2.0.0":
+  version: 2.0.0
+  resolution: "base58-js@npm:2.0.0"
+  checksum: 10c0/25a30866e36f01af6f33a3e28cf3a6ea43cc96532dbf06120379cd3e736d0282ed383a1bbbd3b28f5e0b0a226ec9351ff9e42f33d5e42708b40007dc72e63abb
   languageName: node
   linkType: hard
 
@@ -2059,6 +2096,13 @@ __metadata:
   version: 3.7.8
   resolution: "js-base64@npm:3.7.8"
   checksum: 10c0/a4452a7e7f32b0ef568a344157efec00c14593bbb1cf0c113f008dddff7ec515b35147af0cd70a7735adb69a2a2bdee921adffea2ea465e2c856ba50d649b11e
+  languageName: node
+  linkType: hard
+
+"js-base64@npm:^3.7.7":
+  version: 3.9.1
+  resolution: "js-base64@npm:3.9.1"
+  checksum: 10c0/5de18a23c249eac1dbbd78ad893bb36245684d099f4eeb3344734eb7e28b7817a0f5a7bd2a188dcc2d0f90324d20690b54e68edc49bb8087630abb55dbb17dd5
   languageName: node
   linkType: hard
 
