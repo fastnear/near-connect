@@ -233,6 +233,37 @@ const selector = new NearConnector({
 });
 ```
 
+### Timeout-aware delegated actions
+
+Wallets that honor an explicit delegated-action lifetime advertise both
+`signDelegateActions` and `signDelegateActionsWithTtl`. Require both features
+when the timeout is part of your protocol:
+
+```ts
+const selector = new NearConnector({
+  network: "testnet",
+  features: {
+    signDelegateActions: true,
+    signDelegateActionsWithTtl: true,
+  },
+});
+
+const wallet = await selector.connect();
+const result = await wallet.signDelegateActions({
+  delegateActions: [{
+    receiverId: "wrap.testnet",
+    actions,
+    blockHeightTtl: 300,
+  }],
+});
+```
+
+`blockHeightTtl` is measured from the wallet's final block and must be a
+positive safe integer. Omitting it preserves the wallet's legacy timeout.
+Timeout-aware wallets return each signed delegate canonically as
+`{ borshSerializedBase64 }`; near-connect's result type continues to include
+the historical bare-base64 and structured delegate variants for compatibility.
+
 ## Branding UI
 
 Currently, the library is branded as NEAR Connector in the footer of modal windows. You can set your own brand or completely disable the footer using this method:

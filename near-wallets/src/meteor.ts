@@ -2,6 +2,20 @@ import { createMeteorAdapter, TransportError } from "@fastnear/wallet-adapter";
 
 import type { ConnectorAction } from "./utils/action";
 
+interface SignDelegateActionsParams {
+  network: "mainnet" | "testnet";
+  signerId?: string;
+  delegateActions: Array<{
+    receiverId: string;
+    actions: ConnectorAction[];
+    blockHeightTtl?: number;
+  }>;
+}
+
+interface SignDelegateActionsResponse {
+  signedDelegateActions: Array<{ borshSerializedBase64: string }>;
+}
+
 const defaults = {
   mainnet: "https://relmn.aurora.dev",
   testnet: "https://rpc.testnet.near.org",
@@ -149,6 +163,28 @@ const MeteorWallet = async () => {
             signerId,
             transactions,
           }),
+      });
+    },
+
+    async signDelegateActions(params: SignDelegateActionsParams): Promise<SignDelegateActionsResponse> {
+      const delegateSigner = (
+        meteor as typeof meteor & {
+          signDelegateActions?: (
+            params: SignDelegateActionsParams,
+          ) => Promise<SignDelegateActionsResponse>;
+        }
+      ).signDelegateActions;
+
+      if (delegateSigner == null) {
+        throw new Error(
+          "Meteor delegated-action signing requires @fastnear/wallet-adapter 1.4.0 or newer",
+        );
+      }
+
+      return tryApprove({
+        title: "Sign delegated actions",
+        button: "Open wallet",
+        execute: () => delegateSigner.call(meteor, params),
       });
     },
   };

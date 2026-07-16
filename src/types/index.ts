@@ -82,6 +82,8 @@ export interface SignDelegateActionsParams {
   delegateActions: Array<{
     actions: Array<Action | ConnectorAction>;
     receiverId: string;
+    /** Number of blocks after the wallet's final block at which the delegate expires. */
+    blockHeightTtl?: number;
   }>;
 }
 
@@ -108,15 +110,30 @@ export interface WalletFeatures {
   signInWithoutAddKey: boolean;
   signInAndSignMessage: boolean;
   signDelegateActions: boolean;
+  /** The wallet honors blockHeightTtl when constructing delegated actions. */
+  signDelegateActionsWithTtl?: boolean;
   addFunctionCallKey: boolean;
   mainnet: boolean;
   testnet: boolean;
 }
 
-export type SignDelegateActionResult = {
+export type LegacySignDelegateActionResult = {
   delegateHash: Uint8Array;
   signedDelegate: SignedDelegate;
 };
+
+/** Canonical transport-safe representation for a signed NEP-366 delegate. */
+export interface BorshSerializedSignedDelegate {
+  borshSerializedBase64: string;
+}
+
+/**
+ * Canonical result plus the response variants returned by existing wallets.
+ */
+export type SignDelegateActionResult =
+  | BorshSerializedSignedDelegate
+  | LegacySignDelegateActionResult
+  | string;
 
 export interface SignDelegateActionsResponse {
   signedDelegateActions: SignDelegateActionResult[];

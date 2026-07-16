@@ -16,6 +16,7 @@ import {
 } from "../types";
 import { NearConnector } from "../NearConnector";
 import { nearActionsToConnectorActions } from "../actions";
+import { prepareDelegateActionsForTransport } from "../helpers/delegateActions";
 import SandboxExecutor from "./executor";
 
 export class SandboxWallet {
@@ -78,10 +79,7 @@ export class SandboxWallet {
   async signDelegateActions(params: SignDelegateActionsParams): Promise<SignDelegateActionsResponse> {
     const args = {
       ...params,
-      delegateActions: params.delegateActions.map((delegateAction) => ({
-        ...delegateAction,
-        actions: nearActionsToConnectorActions(delegateAction.actions),
-      })),
+      delegateActions: prepareDelegateActionsForTransport(params.delegateActions),
       network: params.network || this.connector.network,
     };
     return this.executor.call("wallet:signDelegateActions", args);

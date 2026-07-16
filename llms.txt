@@ -139,6 +139,16 @@ interface NearWalletBase {
     nonce: Uint8Array;
     network?: Network;
   }): Promise<SignedMessage>;
+
+  signDelegateActions(params: {
+    signerId?: string;
+    network?: Network;
+    delegateActions: Array<{
+      receiverId: string;
+      actions: Action[];
+      blockHeightTtl?: number;
+    }>;
+  }): Promise<SignDelegateActionsResponse>;
 }
 ```
 
@@ -173,8 +183,15 @@ Available features:
 - `signAndSendTransaction`
 - `signAndSendTransactions`
 - `signInWithoutAddKey`
+- `signDelegateActions`
+- `signDelegateActionsWithTtl`
 - `testnet`
 - `mainnet`
+
+Require both delegate features when your protocol supplies `blockHeightTtl`.
+The TTL is measured from the wallet's final block and must be a positive safe
+integer. Canonical signed-delegate items use `{ borshSerializedBase64 }`;
+legacy bare strings and structured delegates remain in the result union.
 
 ## Real-World Example: Sending a Transaction
 
