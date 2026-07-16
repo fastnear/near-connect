@@ -1,0 +1,39 @@
+{
+  "version": "x402-meteor-2026-07-16",
+  "wallets": [
+    {
+      "id": "meteor-wallet",
+      "name": "Meteor Wallet",
+      "icon": "https://raw.githubusercontent.com/Meteor-Wallet/meteor_wallet_sdk/main/assets/meteor-logo-svg.svg",
+      "description": "The most simple and secure wallet to manage your crypto, access DeFi, and explore Web3",
+      "website": "https://meteorwallet.app/",
+      "version": "1.1.0-x402-20260716",
+      "executor": "https://raw.githubusercontent.com/fastnear/near-connect/f7a39dff6e84e1a58d600adf4d1159fb8baf0120/repository/meteor.js",
+      "type": "sandbox",
+      "features": {
+        "signMessage": true,
+        "signInWithoutAddKey": true,
+        "signInAndSignMessage": true,
+        "signAndSendTransaction": true,
+        "signAndSendTransactions": true,
+        "signDelegateActions": true,
+        "signDelegateActionsWithTtl": true,
+        "mainnet": true,
+        "testnet": true
+      },
+      "platform": {
+        "web": "https://wallet.meteorwallet.app",
+        "chrome": "https://chromewebstore.google.com/detail/meteor-wallet/pcndjhkinnkaohffealmlmhaepkpmgkb"
+      },
+      "permissions": {
+        "storage": true,
+        "allowsOpen": [
+          "https://chromewebstore.google.com",
+          "https://wallet.meteorwallet.app",
+          "https://meteorwallet.app"
+        ],
+        "external": ["meteorCom", "meteorComV2"]
+      }
+    }
+  ]
+}
