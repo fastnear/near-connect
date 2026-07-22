@@ -96,10 +96,15 @@ test("forwards TTL through injected, parent-frame, and sandbox transports", asyn
   }
 });
 
-test("default manifest does not advertise timeout-aware signing", async () => {
+test("only vetted wallets advertise timeout-aware signing", async () => {
   const manifest = JSON.parse(await readFile(path.join(__dirname, "../repository/manifest.json"), "utf8"));
 
+  // Meteor was vetted for TTL-aware delegate signing (x402 QA); any other
+  // wallet advertising it must go through the same QA before landing here.
+  const vetted = new Set(["meteor-wallet"]);
   for (const wallet of manifest.wallets) {
-    assert.notEqual(wallet.features?.signDelegateActionsWithTtl, true);
+    if (wallet.features?.signDelegateActionsWithTtl === true) {
+      assert.ok(vetted.has(wallet.id), `${wallet.id} advertises signDelegateActionsWithTtl but is not vetted`);
+    }
   }
 });

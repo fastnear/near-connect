@@ -39,6 +39,16 @@ export class Popup<T extends Record<string, any>> {
       this.delegate.onReject();
       this.destroy();
     };
+
+    // Escape closes the popup with the same semantics as clicking the
+    // backdrop. Document-level, so it works regardless of focus.
+    const onKeydown = (e: Event) => {
+      if ((e as KeyboardEvent).key !== "Escape") return;
+      this.delegate.onReject();
+      this.destroy();
+    };
+    document.addEventListener("keydown", onKeydown);
+    this.disposables.push(() => document.removeEventListener("keydown", onKeydown));
   }
 
   update(state: Partial<T>) {
@@ -92,6 +102,10 @@ export class Popup<T extends Record<string, any>> {
   destroy() {
     if (this.isClosed) return;
     this.isClosed = true;
+    // Element listeners die with root.remove(), but document-level ones
+    // (Escape) must be disposed explicitly or they leak per popup open.
+    this.disposables.forEach((dispose) => dispose());
+    this.disposables = [];
     this.hide();
     setTimeout(() => {
       this.root.remove();
