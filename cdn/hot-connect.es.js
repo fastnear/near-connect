@@ -549,11 +549,15 @@ class A {
     o && (o.addEventListener(t, n), this.disposables.push(() => o.removeEventListener(t, n)));
   }
   handlers() {
-    this.disposables.forEach((n) => n()), this.disposables = [];
+    this.disposables.forEach((o) => o()), this.disposables = [];
     const e = this.root.querySelector(".modal-container"), t = this.root.querySelector(".modal-content");
-    t.onclick = (n) => n.stopPropagation(), e.onclick = () => {
+    t.onclick = (o) => o.stopPropagation(), e.onclick = () => {
       this.delegate.onReject(), this.destroy();
     };
+    const n = (o) => {
+      o.key === "Escape" && (this.delegate.onReject(), this.destroy());
+    };
+    document.addEventListener("keydown", n), this.disposables.push(() => document.removeEventListener("keydown", n));
   }
   update(e) {
     this.state = { ...this.state, ...e }, this.root.innerHTML = this.dom.html, this.handlers();
@@ -576,7 +580,7 @@ class A {
     }, 200);
   }
   destroy() {
-    this.isClosed || (this.isClosed = !0, this.hide(), setTimeout(() => {
+    this.isClosed || (this.isClosed = !0, this.disposables.forEach((e) => e()), this.disposables = [], this.hide(), setTimeout(() => {
       this.root.remove();
     }, 200));
   }
@@ -610,7 +614,7 @@ class W extends A {
     </div>`;
   }
 }
-const K = "0.13.0";
+const K = "0.13.1";
 async function D(r) {
   const e = await r.executor.getAllStorage(), t = r.executor.connector.providers, n = r.executor.manifest, o = r.id, s = r.code.replaceAll(".localStorage", ".sandboxedLocalStorage").replaceAll(new RegExp("(?<![.\\w])localStorage(?=[\\.\\[\\(])", "g"), "window.sandboxedLocalStorage").replaceAll("window.top", "window.selector").replaceAll("window.open", "window.selector.open");
   return (
