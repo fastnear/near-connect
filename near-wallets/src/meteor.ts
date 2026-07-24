@@ -115,10 +115,19 @@ const MeteorWallet = async () => {
       });
     },
 
-    async signInAndSignMessage({ network, contractId, methodNames, message, nonce, recipient, callbackUrl, state }: any) {
+    // NearConnector sends the NEP-413 params nested under `messageParams`
+    // (SignInAndSignMessageParams) and expects Array<AccountWithSignedMessage>
+    // back. Reading them off the top level signed an `undefined` message, and
+    // returning the bare SignedMessage tripped the connector's
+    // `if (!accounts?.length) throw new Error("Failed to sign in")` guard —
+    // so sign-in appeared to fail after the user had approved both prompts.
+    async signInAndSignMessage({ network, contractId, methodNames, messageParams }: any) {
       const accounts = await this.signIn({ network, contractId, methodNames });
       const accountId = accounts[0]?.accountId;
-      return this.signMessage({ network, message, nonce, recipient, callbackUrl, state, accountId });
+      const signedMessage = await this.signMessage({ network, ...messageParams, accountId });
+      return accounts.map((account: any, i: number) =>
+        i === 0 ? { ...account, signedMessage } : account
+      );
     },
 
     async signAndSendTransaction({
