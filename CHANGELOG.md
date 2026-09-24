@@ -1,3 +1,18 @@
+# 0.14.1
+
+- The 0.14.0 npm tarball shipped the committed `cdn/hot-connect.iife.js` from
+  0.13.1: `cdn/` is tracked in git and was only rebuilt by hand, and npm 7+
+  never runs the `prepublish` hook that was supposed to refresh it. The hook is
+  now `prepublishOnly`, which `npm publish` does run, and the bundles are
+  rebuilt here. Script-tag users get the 0.13.2 converter fixes and the 0.14.0
+  gas-key gate for the first time.
+- Executors rebuilt on `@fastnear/*` 2.5.0: Meteor now maps gas-key actions
+  (its wallet decodes them itself); Near Mobile refuses them explicitly until
+  its backend confirms support.
+- `example/gas-keys.html`: a no-build QA page that adds, funds, drains and
+  deletes a gas key through Meteor on testnet and reads the key back from RPC
+  after each step.
+
 # 0.14.0
 
 - Gas-key actions (protocol 85+): `AddKey` accepts `params.gasKeyInfo`
