@@ -1,5 +1,5 @@
 import { useLocalStorage } from "usehooks-ts";
-import { FinalExecutionOutcome } from "@near-js/types";
+import type { FinalExecutionOutcome } from "@fastnear/near-connect";
 
 import { IPropsWalletAction } from "./wallet-action.types.ts";
 import { FinalOutcome } from "./FinalOutcome.tsx";
