@@ -176,6 +176,8 @@ export interface WalletFeatures {
   /** The wallet honors blockHeightTtl when constructing delegated actions. */
   signDelegateActionsWithTtl?: boolean;
   addFunctionCallKey: boolean;
+  /** The wallet can sign AddKey with gasKeyInfo, TransferToGasKey and WithdrawFromGasKey (protocol 85+). Off unless verified per wallet. */
+  gasKeys?: boolean;
   mainnet: boolean;
   testnet: boolean;
 }

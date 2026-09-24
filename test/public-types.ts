@@ -38,10 +38,15 @@ void optionalCapability;
 // Both action shapes are accepted: a connector action, and an object shaped like
 // near-api-js actionCreators output (structural — no near-api-js import here).
 const connectorAction: ConnectorAction = { type: "Transfer", params: { deposit: "1" } };
+const gasKeyAddKey: ConnectorAction = {
+  type: "AddKey",
+  params: { publicKey: "ed25519:x", accessKey: { permission: { receiverId: "app.near", methodNames: ["ping"] } }, gasKeyInfo: { balance: "0", numNonces: 4 } },
+};
+const fundGasKey: ConnectorAction = { type: "TransferToGasKey", params: { publicKey: "ed25519:x", deposit: "1" } };
 const nearApiJsShaped = { enum: "transfer", transfer: { deposit: 1n } };
 const send: SignAndSendTransactionParams = {
   receiverId: "bob.near",
-  actions: [connectorAction, nearApiJsShaped],
+  actions: [connectorAction, gasKeyAddKey, fundGasKey, nearApiJsShaped],
 };
 
 declare const outcome: FinalExecutionOutcome;

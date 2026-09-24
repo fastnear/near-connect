@@ -145,6 +145,16 @@ This library accepts two shapes of actions in methods like `signAndSendTransacti
 
 Prefer the connector format for anything near-api-js does not model.
 
+### Gas keys (protocol 85+)
+
+Three connector actions cover gas keys — access keys with their own prepaid gas balance and up to 1,024 nonce lanes:
+
+- `{ type: "AddKey", params: { publicKey, accessKey: { permission }, gasKeyInfo: { balance: "0", numNonces } } }` — `gasKeyInfo` turns a `"FullAccess"` permission into a GasKeyFullAccess key and a function-call permission into a GasKeyFunctionCall key (no `allowance`: the balance is the allowance).
+- `{ type: "TransferToGasKey", params: { publicKey, deposit } }` — fund the key; any account may send it.
+- `{ type: "WithdrawFromGasKey", params: { publicKey, amount } }` — drain it; only the owning account may sign it, and never inside a delegate.
+
+The connector refuses these unless the wallet's manifest sets `features.gasKeys`. That is deliberate: a wallet that does not know `gasKeyInfo` could ignore it and add a plain key. The flag is enabled per wallet only after a verified sign-and-send. Signing *with* a gas key (TransactionV1, `nonceIndex`) is local signing in `@fastnear/api`, not a wallet operation.
+
 ## Wallet integration
 
 The developer writes a self-hosted script that implements the integration of their wallet and adds a description to the common [manifest](./repository/manifest.json):
