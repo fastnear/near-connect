@@ -12,7 +12,7 @@ NEAR Connect (`@fastnear/near-connect`) is a zero-runtime-dependency wallet conn
 - **CDN bundle:** `yarn cdn` (Vite build to `./cdn/` in ES, CJS, IIFE formats; global name `HOTConnect`)
 - **Type check:** `yarn type-check`
 - **Build wallet executors:** `yarn build:wallets` (builds each wallet executor to `./repository/`)
-- **Build single executor:** `cd near-wallets && yarn build:mnw` (replace `mnw` with wallet name; `PACKAGE` env var is set inside each script)
+- **Build single executor:** `cd near-wallets && yarn build:meteor` (replace `meteor` with wallet name; `PACKAGE` env var is set inside each script)
 - **Run example app:** `yarn example` (starts React demo at `example/`, port 1234)
 
 **Tests:** `yarn test` (root) builds the library, type-checks `test/public-types.ts`, and runs `node --test test/*.test.cjs`. That includes `test/executor-bytes.test.cjs`, a byte-level check that the executors' transaction serialization (real `@fastnear/utils` + `@fastnear/borsh` from `near-wallets/node_modules`, plus `near-wallets/src/utils/action.ts`) reproduces vectors generated with near-api-js — it needs `near-wallets/node_modules` installed and fails loudly otherwise.
@@ -55,27 +55,25 @@ Three wallet adapter types implement the `NearWalletBase` interface:
 
 ### Wallet executors (`near-wallets/`)
 
-Each wallet has its own entry point (e.g., `hotwallet/`, `mnw.ts`, `meteor.ts`). Vite builds each as a standalone IIFE to `./repository/`. The `PACKAGE` env var selects which wallet to build.
+Each wallet has its own entry point (e.g., `hotwallet/`, `nightly/`, `meteor.ts`). Vite builds each as a standalone IIFE to `./repository/`. The `PACKAGE` env var selects which wallet to build.
 
 **Shared utilities in `near-wallets/src/utils/`:**
 - **`rpc.ts`** — `NearRpc` class: a standalone RPC client using plain `fetch()` with retry logic, provider failover, and adaptive timeouts. No `@near-js/providers` dependency. Methods: `block()`, `query()`, `txStatus()`, `sendTransaction()`, `viewMethod()`, `sendJsonRpc()`.
 - **`action.ts`** — `connectorActionsToFastnearActions()` converts connector actions to the flat format expected by `@fastnear/utils` `mapTransaction()`. Also exports all `ConnectorAction` type definitions used by executor code. Keep it import-free: `test/executor-bytes.test.cjs` transpiles it standalone.
-- **`keystore.ts`** — Key storage utilities.
 - **`detectBrowser.ts`** — Browser detection.
 
-**Executor list** (7 executors):
+**Executor list** (6 executors):
 
 | Executor | Key dependencies | Notes |
 |----------|-----------------|-------|
-| `hotwallet` | `@here-wallet/core` | Has Preact UI (`view.ts`, `styles.ts`) |
-| `mnw` | `@fastnear/utils`, `borsh` | Signs locally with function call keys via `@fastnear/utils` crypto |
+| `hotwallet` | (none) | Has Preact UI (`view.ts`, `styles.ts`) |
 | `meteor` | `@fastnear/wallet-adapter` | Uses `createMeteorAdapter()` |
 | `near-mobile` | `@fastnear/wallet-adapter`, `qr-code-styling` | Uses `createNearMobileAdapter()`; has QR code UI (`view.ts`) |
-| `nightly` | `@fastnear/utils`, `borsh` | Browser extension bridge via `window.selector.external` |
+| `nightly` | `@fastnear/utils`, `@fastnear/borsh` | Browser extension bridge via `window.selector.external` |
 | `okx` | `NearRpc` (internal) | Browser extension bridge via `window.selector.external` (`okxwallet.near`) |
-| `wallet-connect` | `@walletconnect/modal`, `@fastnear/utils`, `borsh` | WalletConnect v2 protocol |
+| `wallet-connect` | `@walletconnect/sign-client`, `@fastnear/utils`, `@fastnear/borsh` | WalletConnect v2 protocol |
 
-**`repository/manifest.json`** — Registry (v1.1.0) mapping wallet metadata, features, platform links, permissions, and executor URLs. Contains 9 wallet entries: `hot-wallet`, `mynearwallet`, `meteor-wallet`, `intear-wallet` (external executor), `okx-wallet`, `near-mobile`, `nightly-wallet`, `wallet-connect`, `unity-wallet` (reuses `wallet-connect.js` executor). The `platform` field is an object keyed by platform name (e.g. `{ "android": "url", "ios": "url", "chrome": "url", "web": "url" }`).
+**`repository/manifest.json`** — Registry (v1.2.0) mapping wallet metadata, features, platform links, permissions, and executor URLs. Contains 8 wallet entries: `hot-wallet`, `meteor-wallet`, `intear-wallet` (external executor), `okx-wallet`, `near-mobile`, `nightly-wallet`, `wallet-connect`, `unity-wallet` (reuses `wallet-connect.js` executor). The `platform` field is an object keyed by platform name (e.g. `{ "android": "url", "ios": "url", "chrome": "url", "web": "url" }`).
 
 ### Type system (`src/types/`)
 

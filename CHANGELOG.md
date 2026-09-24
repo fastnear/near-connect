@@ -13,6 +13,10 @@
   (which near-api-js stores as `null`) now maps to `"AccountId"` instead of
   `"CodeHash"`; `signedDelegate` actions throw a clear error.
 - `yarn test` fails if any `@near-js` reference reaches `build/`.
+- Remove the MyNearWallet executor and its manifest entry ahead of the wallet's
+  2026-10-31 sunset (manifest 1.2.0, 8 wallets). `addFunctionCallKey` stays in
+  the connector API, but no bundled executor implements it any more; the static
+  example connects through Meteor Wallet instead.
 
 # 0.13.1
 

@@ -48,7 +48,7 @@ export class NearRpc {
   // `rpcProviders`. That means a caller passing `selector.providers.testnet`
   // (which historically defaulted to `[]`) would get mainnet RPC for a
   // testnet session with no warning — exactly the bug fixed in
-  // mnw.ts:80 (commit 266d424). Callers who expect testnet behavior must
+  // the former MyNearWallet executor (commit 266d424). Callers who expect testnet behavior must
   // pass a non-empty providers list (e.g. `[network.nodeUrl]` as a fallback).
   // okx.ts and wallet-connect.ts intentionally rely on this default for
   // mainnet-only operation.

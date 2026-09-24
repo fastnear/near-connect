@@ -7,7 +7,7 @@ const { pathToFileURL } = require("node:url");
 const ts = require("typescript");
 
 // Byte-level regression test for the executors' transaction serialization.
-// mnw.ts, wallet-connect.ts and nightly/helper.ts all do
+// wallet-connect.ts and nightly/helper.ts both do
 //   serialize(SCHEMA.Transaction, mapTransaction({ ..., actions: connectorActionsToFastnearActions(actions) }))
 // with `serialize` from @fastnear/borsh and SCHEMA/mapTransaction from @fastnear/utils, resolved from
 // near-wallets/node_modules (the executor project's own dependencies).
@@ -140,14 +140,14 @@ for (const { name, receiverId, actions } of CASES) {
   });
 }
 
-test("bigint nonce (mnw.ts path) serializes identically to a number nonce", async () => {
+test("bigint nonce serializes identically to a number nonce", async () => {
   const { utils, serialize, toFastnearActions } = await loadDeps();
   const { receiverId, actions } = CASES[0];
   const bytes = serialize(utils.SCHEMA.Transaction, utils.mapTransaction(plainTx(receiverId, toFastnearActions(actions), 42n)));
   assert.equal(hex(bytes), EXPECTED["transfer"]);
 });
 
-test("signed transaction wrapper as built by mnw.ts", async () => {
+test("SignedTransaction wrapper (the shape wallet-connect decodes)", async () => {
   const { utils, serialize, toFastnearActions } = await loadDeps();
   const { receiverId, actions } = CASES[0];
   const mappedTx = utils.mapTransaction(plainTx(receiverId, toFastnearActions(actions)));
