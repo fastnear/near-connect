@@ -1,7 +1,7 @@
 import SignClient from "@walletconnect/sign-client";
-import { serialize as borshSerialize, deserialize as borshDeserialize } from "borsh";
+import { serialize as borshSerialize, deserialize as borshDeserialize } from "@fastnear/borsh";
 import { bytesToBase64, mapTransaction, SCHEMA } from "@fastnear/utils";
-import type { PlainTransaction } from "@fastnear/utils";
+import type { NearPublicKey, PlainTransaction } from "@fastnear/utils";
 import { NearRpc } from "./utils/rpc";
 import { connectorActionsToFastnearActions } from "./utils/action";
 import type { ConnectorAction } from "./utils/action";
@@ -299,7 +299,8 @@ const WalletConnect = async () => {
     const baseNonce = requireAccessKeyNonce(accessKey, "wallet-connect view_access_key");
     const plainTx: PlainTransaction = {
       signerId: transaction.signerId,
-      publicKey: account.publicKey,
+      // WalletConnect wallets return the key as a plain string; the executor never generates it.
+      publicKey: account.publicKey as NearPublicKey,
       receiverId: transaction.receiverId,
       nonce: (baseNonce as number) + 1,
       blockHash: block.header.hash,
@@ -349,7 +350,7 @@ const WalletConnect = async () => {
       const baseNonce = requireAccessKeyNonce(accessKey, "wallet-connect view_access_key");
       const plainTx: PlainTransaction = {
         signerId: transaction.signerId,
-        publicKey: account.publicKey,
+        publicKey: account.publicKey as NearPublicKey,
         receiverId: transaction.receiverId,
         nonce: (baseNonce as number) + i + 1,
         blockHash: block.header.hash,
