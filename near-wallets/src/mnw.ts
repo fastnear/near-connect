@@ -1,9 +1,9 @@
-import { serialize as borshSerialize } from "borsh";
+import { serialize as borshSerialize } from "@fastnear/borsh";
 import {
   privateKeyFromRandom, publicKeyFromPrivate, signHash, sha256,
   bytesToBase64, mapTransaction, SCHEMA,
 } from "@fastnear/utils";
-import type { PlainTransaction } from "@fastnear/utils";
+import type { NearPublicKey, PlainTransaction } from "@fastnear/utils";
 
 import { NearRpc } from "./utils/rpc";
 import { connectorActionsToFastnearActions } from "./utils/action";
@@ -120,7 +120,7 @@ export class MyNearWalletConnector {
     // `addFunctionCallKey`). If the broadcast fails or the user cancels,
     // we still clear local state so they aren't stuck signed-in on the page.
     const accountId = this.signedAccountId;
-    const publicKeysToDelete: string[] = [];
+    const publicKeysToDelete: NearPublicKey[] = [];
     const seenPrivateKeys = new Set<string>();
 
     const legacyFck = this.functionCallKey;
@@ -151,7 +151,7 @@ export class MyNearWalletConnector {
           nonce: 0,
           receiverId: accountId,
           blockHash: block.header.hash,
-          actions: publicKeysToDelete.map((publicKey) => ({ type: "DeleteKey", publicKey })),
+          actions: publicKeysToDelete.map((publicKey) => ({ type: "DeleteKey" as const, publicKey })),
         }]);
       } catch (error) {
         // eslint-disable-next-line no-console

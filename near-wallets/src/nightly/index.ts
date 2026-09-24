@@ -1,4 +1,5 @@
 import { toBase58 } from "@fastnear/utils";
+import type { NearPublicKey } from "@fastnear/utils";
 
 import type { ConnectorAction } from "../utils/action";
 import { signAndSendTransactionsHandler } from "./helper";
@@ -32,7 +33,7 @@ const checkExist = async () => {
 const Nightly = async () => {
   await window.selector.external("nightly.near", "connect").catch(() => {});
 
-  const getAccounts = async (): Promise<Array<{ accountId: string; publicKey: string }>> => {
+  const getAccounts = async (): Promise<Array<{ accountId: string; publicKey: NearPublicKey }>> => {
     const { accountId, publicKey } = await window.selector.external("nightly.near", "account");
     if (!accountId) return [];
 

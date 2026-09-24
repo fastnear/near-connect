@@ -1,6 +1,6 @@
-import { serialize as borshSerialize } from "borsh";
+import { serialize as borshSerialize } from "@fastnear/borsh";
 import { mapTransaction, SCHEMA } from "@fastnear/utils";
-import type { PlainTransaction } from "@fastnear/utils";
+import type { NearPublicKey, PlainTransaction } from "@fastnear/utils";
 import { NearRpc } from "../utils/rpc";
 import { connectorActionsToFastnearActions } from "../utils/action";
 import type { ConnectorAction } from "../utils/action";
@@ -8,7 +8,7 @@ import { requireAccessKeyNonce } from "../utils/accessKey";
 
 export const signAndSendTransactionsHandler = async (
   transactions: { signerId: string; receiverId: string; actions: ConnectorAction[] }[],
-  publicKey: string,
+  publicKey: NearPublicKey,
   network: { networkId: string; nodeUrl: string }
 ): Promise<Array<any>> => {
   const provider = new NearRpc([network.nodeUrl]);

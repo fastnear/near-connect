@@ -15,7 +15,7 @@ NEAR Connect (`@fastnear/near-connect`) is a zero-runtime-dependency wallet conn
 - **Build single executor:** `cd near-wallets && yarn build:mnw` (replace `mnw` with wallet name; `PACKAGE` env var is set inside each script)
 - **Run example app:** `yarn example` (starts React demo at `example/`, port 1234)
 
-There are no test scripts configured in this repository.
+**Tests:** `yarn test` (root) builds the library, type-checks `test/public-types.ts`, and runs `node --test test/*.test.cjs`. That includes `test/executor-bytes.test.cjs`, a byte-level check that the executors' transaction serialization (real `@fastnear/utils` + `@fastnear/borsh` from `near-wallets/node_modules`, plus `near-wallets/src/utils/action.ts`) reproduces vectors generated with near-api-js — it needs `near-wallets/node_modules` installed and fails loudly otherwise.
 
 ## Architecture
 
@@ -24,7 +24,7 @@ There are no test scripts configured in this repository.
 Each has its own `package.json`, `node_modules`, and `tsconfig.json`:
 
 1. **Root (`./`)** — The main library published to npm as `@fastnear/near-connect`. Zero dependencies of any kind — near-api-js-shaped action input is typed structurally in `src/actions/near-api-js-shapes.ts`, and `yarn test` fails if `@near-js` shows up anywhere in `build/`. Outputs to `./build/` (npm) and `./cdn/` (browser bundles).
-2. **`near-wallets/`** — Wallet executor implementations. Each wallet is built as a standalone IIFE to `./repository/`. When `EXAMPLE=true` is set, outputs to `../example/public/repository` instead. Key devDependencies: `@fastnear/utils`, `@fastnear/wallet-adapter`, `@fastnear/borsh-schema`, `@noble/curves`, `@noble/hashes`, `borsh`, `@walletconnect/modal`, `@here-wallet/core`, `qr-code-styling`.
+2. **`near-wallets/`** — Wallet executor implementations. Each wallet is built as a standalone IIFE to `./repository/`. When `EXAMPLE=true` is set, outputs to `../example/public/repository` instead. Key devDependencies: `@fastnear/utils`, `@fastnear/borsh`, `@fastnear/borsh-schema`, `@fastnear/wallet-adapter` (always the same `@fastnear/*` release — bump them together, then rebuild `repository/`), `@noble/curves`, `@noble/hashes`, `@walletconnect/sign-client`, `qrcode-generator`.
 3. **`example/`** — React demo app with Tailwind CSS 4. Also contains `static.html`, a no-build-tools vanilla JS example.
 
 ### Core library (`src/`)
@@ -59,8 +59,7 @@ Each wallet has its own entry point (e.g., `hotwallet/`, `mnw.ts`, `meteor.ts`).
 
 **Shared utilities in `near-wallets/src/utils/`:**
 - **`rpc.ts`** — `NearRpc` class: a standalone RPC client using plain `fetch()` with retry logic, provider failover, and adaptive timeouts. No `@near-js/providers` dependency. Methods: `block()`, `query()`, `txStatus()`, `sendTransaction()`, `viewMethod()`, `sendJsonRpc()`.
-- **`action.ts`** — Two converters: `connectorActionsToNearActions()` converts to `@near-js/transactions` `Action[]`; `connectorActionsToFastnearActions()` converts to the flat format expected by `@fastnear/utils` `mapTransaction()`. Also exports all `ConnectorAction` type definitions used by executor code.
-- **`action-nearapi.ts`** — Backward-compat shim: `connectorActionsToNearApiJsActions()` simply delegates to `connectorActionsToNearActions()`. No longer uses `near-api-js`.
+- **`action.ts`** — `connectorActionsToFastnearActions()` converts connector actions to the flat format expected by `@fastnear/utils` `mapTransaction()`. Also exports all `ConnectorAction` type definitions used by executor code. Keep it import-free: `test/executor-bytes.test.cjs` transpiles it standalone.
 - **`keystore.ts`** — Key storage utilities.
 - **`detectBrowser.ts`** — Browser detection.
 
@@ -103,7 +102,7 @@ Published to npm and available via jsDelivr: `https://cdn.jsdelivr.net/npm/@fast
 
 - Zero runtime dependencies — all wallet SDKs are bundled into executor scripts, not the main library
 - `NearRpc` is a standalone class using plain `fetch()` — no `@near-js/providers` dependency
-- Executors use `@fastnear/utils` and `@fastnear/wallet-adapter` for crypto/signing/adapter logic; `near-api-js` has been fully removed
+- Executors use `@fastnear/utils` and `@fastnear/wallet-adapter` for crypto/signing/adapter logic and serialize with `@fastnear/borsh` directly (no vite alias, no sibling-checkout path); `near-api-js` has been fully removed from `near-wallets/`
 - `@noble/curves` and `@noble/hashes` are v2 (ESM-only); Vite handles them at build time, no CJS runtime concern
 - Manifest can be provided inline (for cherry-picking wallets) or loaded from URL
 - `window.selector` is the sandboxed API surface exposed to executor iframes
@@ -112,7 +111,7 @@ Published to npm and available via jsDelivr: `https://cdn.jsdelivr.net/npm/@fast
 
 - Prettier: 160 char line width, 2-space indent (`.prettierrc`)
 - ESLint with TypeScript and React hooks (`eslint:recommended`, `@typescript-eslint/recommended`, `react-hooks/recommended`)
-- Node 22.17.1, Yarn 1.22.22 (specified in `.prototools`)
+- Node 22.17.1, Yarn 4.17.1 (Berry; `.prototools`). All three lockfiles are Yarn Berry format — never run Yarn 1 against them. `.yarnrc.yml` exempts the `@fastnear` scope from Yarn's fresh-publish age gate because we publish those packages ourselves.
 
 ## npm publishing
 
