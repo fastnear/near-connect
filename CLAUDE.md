@@ -23,7 +23,7 @@ There are no test scripts configured in this repository.
 
 Each has its own `package.json`, `node_modules`, and `tsconfig.json`:
 
-1. **Root (`./`)** — The main library published to npm as `@fastnear/near-connect`. Zero runtime dependencies (devDependencies on `@near-js/transactions` and `@near-js/types` are used only for the `src/actions/` converter types). Outputs to `./build/` (npm) and `./cdn/` (browser bundles).
+1. **Root (`./`)** — The main library published to npm as `@fastnear/near-connect`. Zero dependencies of any kind — near-api-js-shaped action input is typed structurally in `src/actions/near-api-js-shapes.ts`, and `yarn test` fails if `@near-js` shows up anywhere in `build/`. Outputs to `./build/` (npm) and `./cdn/` (browser bundles).
 2. **`near-wallets/`** — Wallet executor implementations. Each wallet is built as a standalone IIFE to `./repository/`. When `EXAMPLE=true` is set, outputs to `../example/public/repository` instead. Key devDependencies: `@fastnear/utils`, `@fastnear/wallet-adapter`, `@fastnear/borsh-schema`, `@noble/curves`, `@noble/hashes`, `borsh`, `@walletconnect/modal`, `@here-wallet/core`, `qr-code-styling`.
 3. **`example/`** — React demo app with Tailwind CSS 4. Also contains `static.html`, a no-build-tools vanilla JS example.
 
@@ -45,7 +45,7 @@ Three wallet adapter types implement the `NearWalletBase` interface:
 - **`InjectedWallet`** (`src/InjectedWallet.ts`) — Wraps wallets injected via `near-wallet-injected` custom events (EIP-6963-style).
 - **`ParentFrameWallet`** (`src/ParentFrameWallet.ts`) — Wraps wallets in a parent frame, created when receiving `postMessage` with `type: "near-wallet-injected"`. Auto-connects if `autoConnect` is true.
 
-**`src/actions/`** — `nearActionsToConnectorActions()` converts `@near-js/transactions` `Action` objects to the library's `ConnectorAction` format (one direction only). The `ConnectorAction` type uses `{ type, params }` discriminated unions (e.g. `{ type: "FunctionCall", params: { methodName, args, gas, deposit } }`).
+**`src/actions/`** — `nearActionsToConnectorActions()` converts near-api-js-*shaped* action objects (`NearApiJsActionLike`, structural, no near-api-js dependency) to the library's `ConnectorAction` format (one direction only). It throws on AddKey permissions other than functionCall/fullAccess and on signedDelegate rather than guessing. The `ConnectorAction` type uses `{ type, params }` discriminated unions (e.g. `{ type: "FunctionCall", params: { methodName, args, gas, deposit } }`).
 
 **`src/popups/`** — DOM-based wallet selection modal UI and iframe container. Files: `Popup.ts` (base class), `NearWalletsPopup.ts` (wallet list), `IframeWalletPopup.ts` (executor iframe), `styles.ts` (inline CSS). Uses tagged template literals (`html` helper with auto-escaping) with namespaced classes.
 

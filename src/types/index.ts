@@ -1,8 +1,71 @@
-import type { FinalExecutionOutcome } from "@near-js/types";
-import type { Action, DelegateAction, SignedDelegate } from "@near-js/transactions";
 import type { ConnectorAction } from "../actions/types";
+import type { NearApiJsActionLike } from "../actions/near-api-js-shapes";
 
-export type { FinalExecutionOutcome, Action };
+/**
+ * A near-api-js-shaped action (see `NearApiJsActionLike`). Kept under the name
+ * `Action` for backwards compatibility with earlier releases that re-exported
+ * the near-api-js type here; near-connect no longer depends on near-api-js.
+ */
+export type Action = NearApiJsActionLike;
+
+// ---- RPC final execution outcome (structural copy of the JSON-RPC shape; no
+// near-api-js dependency). Wallets return exactly what the RPC returned.
+
+export interface ExecutionError {
+  error_message: string;
+  error_type: string;
+}
+
+export interface ExecutionStatus {
+  SuccessValue?: string;
+  SuccessReceiptId?: string;
+  Failure?: ExecutionError;
+}
+
+export interface ExecutionOutcome {
+  logs: string[];
+  receipt_ids: string[];
+  gas_burnt: number;
+  tokens_burnt: string;
+  executor_id: string;
+  status: ExecutionStatus | "Unknown" | "Pending" | "Failure";
+}
+
+export interface ExecutionOutcomeWithId {
+  id: string;
+  outcome: ExecutionOutcome;
+}
+
+export interface FinalExecutionStatus {
+  SuccessValue?: string;
+  Failure?: ExecutionError;
+}
+
+export interface FinalExecutionOutcome {
+  final_execution_status?: "NONE" | "INCLUDED" | "INCLUDED_FINAL" | "EXECUTED" | "FINAL" | "EXECUTED_OPTIMISTIC";
+  status: FinalExecutionStatus | "NotStarted" | "Started" | "Failure";
+  transaction: unknown;
+  transaction_outcome: ExecutionOutcomeWithId;
+  receipts_outcome: ExecutionOutcomeWithId[];
+  receipts?: unknown[];
+}
+
+/**
+ * The legacy signed-delegate payload some wallets still return (near-api-js
+ * `SignedDelegate` classes). near-connect only transports it; use the
+ * `{ borshSerializedBase64 }` form for new integrations.
+ */
+export interface LegacySignedDelegate {
+  delegateAction: {
+    senderId: string;
+    receiverId: string;
+    actions: unknown[];
+    nonce: unknown;
+    maxBlockHeight: unknown;
+    publicKey: unknown;
+  };
+  signature: unknown;
+}
 
 export type Logger = {
   log: (...logs: any[]) => void;
@@ -119,7 +182,7 @@ export interface WalletFeatures {
 
 export type LegacySignDelegateActionResult = {
   delegateHash: Uint8Array;
-  signedDelegate: SignedDelegate;
+  signedDelegate: LegacySignedDelegate;
 };
 
 /** Canonical transport-safe representation for a signed NEP-366 delegate. */

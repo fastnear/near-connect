@@ -2,7 +2,7 @@
 # Manual changes might be lost - proceed with caution!
 
 __metadata:
-  version: 8
+  version: 10
   cacheKey: 10c0
 
 "@esbuild/aix-ppc64@npm:0.25.12":
@@ -191,8 +191,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fastnear/near-connect@workspace:."
   dependencies:
-    "@near-js/transactions": "npm:^2.5.1"
-    "@near-js/types": "npm:^2.5.1"
     typescript: "npm:^5.2.2"
     vite: "npm:^7.2.2"
     vite-plugin-node-polyfills: "npm:^0.24.0"
@@ -212,84 +210,6 @@ __metadata:
   version: 1.5.5
   resolution: "@jridgewell/sourcemap-codec@npm:1.5.5"
   checksum: 10c0/f9e538f302b63c0ebc06eecb1dd9918dd4289ed36147a0ddce35d6ea4d7ebbda243cda7b2213b6a5e1d8087a298d5cf630fb2bd39329cdecb82017023f6081a0
-  languageName: node
-  linkType: hard
-
-"@near-js/crypto@npm:2.5.1":
-  version: 2.5.1
-  resolution: "@near-js/crypto@npm:2.5.1"
-  dependencies:
-    "@near-js/types": "npm:2.5.1"
-    "@near-js/utils": "npm:2.5.1"
-    "@noble/curves": "npm:1.8.1"
-    "@noble/hashes": "npm:^1.7.1"
-    borsh: "npm:1.0.0"
-    secp256k1: "npm:5.0.1"
-  peerDependencies:
-    "@near-js/types": ^2.0.1
-    "@near-js/utils": ^2.0.1
-  checksum: 10c0/4b7bd929e3378b04c920f7f203e06ac9b48bc67f25322200438b27e2bb9cb3deedf79ff2c974f0f93c694555656b654705cff8de5e2fcb379087090138fd50e3
-  languageName: node
-  linkType: hard
-
-"@near-js/transactions@npm:^2.5.1":
-  version: 2.5.1
-  resolution: "@near-js/transactions@npm:2.5.1"
-  dependencies:
-    "@near-js/crypto": "npm:2.5.1"
-    "@near-js/types": "npm:2.5.1"
-    "@near-js/utils": "npm:2.5.1"
-    "@noble/hashes": "npm:1.7.1"
-    borsh: "npm:1.0.0"
-  peerDependencies:
-    "@near-js/crypto": ^2.0.1
-    "@near-js/types": ^2.0.1
-    "@near-js/utils": ^2.0.1
-  checksum: 10c0/544c0cc302c6740e5204a8ac1b64c76f94686ba99499dd06abce56ad712397c717adce1c8f0c8903693701823929979d06e1b291d4614fa443b98c87eeac6f97
-  languageName: node
-  linkType: hard
-
-"@near-js/types@npm:2.5.1, @near-js/types@npm:^2.5.1":
-  version: 2.5.1
-  resolution: "@near-js/types@npm:2.5.1"
-  checksum: 10c0/4357b3fe1d352a76d225289b240e8b412a7f1f7c1101654f71da309fdb12607e5b0b532997bf657d662a46d2865e29414adc8aca9d18230b210fb4c8776bd693
-  languageName: node
-  linkType: hard
-
-"@near-js/utils@npm:2.5.1":
-  version: 2.5.1
-  resolution: "@near-js/utils@npm:2.5.1"
-  dependencies:
-    "@near-js/types": "npm:2.5.1"
-    "@scure/base": "npm:^1.2.4"
-    depd: "npm:2.0.0"
-    mustache: "npm:4.0.0"
-  peerDependencies:
-    "@near-js/types": ^2.0.1
-  checksum: 10c0/c527b60d99200aaa512fdf0788242a47fe9c1a874d972f5d250060acbdf1658069fb9c34c0616f47e7eb93acf53ac5df72b126e7a1cc3533edbca6af1b520990
-  languageName: node
-  linkType: hard
-
-"@noble/curves@npm:1.8.1":
-  version: 1.8.1
-  resolution: "@noble/curves@npm:1.8.1"
-  dependencies:
-    "@noble/hashes": "npm:1.7.1"
-  checksum: 10c0/84902c7af93338373a95d833f77981113e81c48d4bec78f22f63f1f7fdd893bc1d3d7a3ee78f01b9a8ad3dec812a1232866bf2ccbeb2b1560492e5e7d690ab1f
-  languageName: node
-  linkType: hard
-
-"@noble/hashes@npm:1.7.1":
-  version: 1.7.1
-  resolution: "@noble/hashes@npm:1.7.1"
-  checksum: 10c0/2f8ec0338ccc92b576a0f5c16ab9c017a3a494062f1fbb569ae641c5e7eab32072f9081acaa96b5048c0898f972916c818ea63cbedda707886a4b5ffcfbf94e3
-  languageName: node
-  linkType: hard
-
-"@noble/hashes@npm:^1.7.1":
-  version: 1.8.0
-  resolution: "@noble/hashes@npm:1.8.0"
-  checksum: 10c0/06a0b52c81a6fa7f04d67762e08b2c476a00285858150caeaaff4037356dd5e119f45b2a530f638b77a5eeca013168ec1b655db41bae3236cb2e9d511484fc77
   languageName: node
   linkType: hard
 
@@ -501,13 +421,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@scure/base@npm:^1.2.4":
-  version: 1.2.6
-  resolution: "@scure/base@npm:1.2.6"
-  checksum: 10c0/49bd5293371c4e062cb6ba689c8fe3ea3981b7bb9c000400dc4eafa29f56814cdcdd27c04311c2fec34de26bc373c593a1d6ca6d754398a488d587943b7c128a
-  languageName: node
-  linkType: hard
-
 "@types/estree@npm:1.0.8, @types/estree@npm:^1.0.0":
   version: 1.0.8
   resolution: "@types/estree@npm:1.0.8"
@@ -587,13 +500,6 @@ __metadata:
   version: 5.2.2
   resolution: "bn.js@npm:5.2.2"
   checksum: 10c0/cb97827d476aab1a0194df33cd84624952480d92da46e6b4a19c32964aa01553a4a613502396712704da2ec8f831cf98d02e74ca03398404bd78a037ba93f2ab
-  languageName: node
-  linkType: hard
-
-"borsh@npm:1.0.0":
-  version: 1.0.0
-  resolution: "borsh@npm:1.0.0"
-  checksum: 10c0/dbf893af43e5efc6bc9ae2579d5c12514da72437311a30d8c3cfa77c1d51385e0b2a7242f193f7af980e71161ed9db524ab23301752b4401a1b8bfc47f09957b
   languageName: node
   linkType: hard
 
@@ -908,13 +814,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"depd@npm:2.0.0":
-  version: 2.0.0
-  resolution: "depd@npm:2.0.0"
-  checksum: 10c0/58bd06ec20e19529b06f7ad07ddab60e504d9e0faca4bd23079fac2d279c3594334d736508dc350e06e510aba5e22e4594483b3a6562ce7c17dd797f4cc4ad2c
-  languageName: node
-  linkType: hard
-
 "des.js@npm:^1.0.0":
   version: 1.1.0
   resolution: "des.js@npm:1.1.0"
@@ -954,7 +853,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"elliptic@npm:^6.5.3, elliptic@npm:^6.5.7, elliptic@npm:^6.6.1":
+"elliptic@npm:^6.5.3, elliptic@npm:^6.6.1":
   version: 6.6.1
   resolution: "elliptic@npm:6.6.1"
   dependencies:
@@ -1679,15 +1578,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mustache@npm:4.0.0":
-  version: 4.0.0
-  resolution: "mustache@npm:4.0.0"
-  bin:
-    mustache: ./bin/mustache
-  checksum: 10c0/63f7fdb50b55f1285c2c601d2bef760a2e10a3ea68b020358430141010fd990c11e58bb62e1da59363a6e0c74c27c2b7277965f5bcf9a831961a93959450c6ff
-  languageName: node
-  linkType: hard
-
 "nanoid@npm:^3.3.11":
   version: 3.3.11
   resolution: "nanoid@npm:3.3.11"
@@ -1701,26 +1591,6 @@ __metadata:
   version: 1.0.0
   resolution: "negotiator@npm:1.0.0"
   checksum: 10c0/4c559dd52669ea48e1914f9d634227c561221dd54734070791f999c52ed0ff36e437b2e07d5c1f6e32909fc625fe46491c16e4a8f0572567d4dd15c3a4fda04b
-  languageName: node
-  linkType: hard
-
-"node-addon-api@npm:^5.0.0":
-  version: 5.1.0
-  resolution: "node-addon-api@npm:5.1.0"
-  dependencies:
-    node-gyp: "npm:latest"
-  checksum: 10c0/0eb269786124ba6fad9df8007a149e03c199b3e5a3038125dfb3e747c2d5113d406a4e33f4de1ea600aa2339be1f137d55eba1a73ee34e5fff06c52a5c296d1d
-  languageName: node
-  linkType: hard
-
-"node-gyp-build@npm:^4.2.0":
-  version: 4.8.4
-  resolution: "node-gyp-build@npm:4.8.4"
-  bin:
-    node-gyp-build: bin.js
-    node-gyp-build-optional: optional.js
-    node-gyp-build-test: build-test.js
-  checksum: 10c0/444e189907ece2081fe60e75368784f7782cfddb554b60123743dfb89509df89f1f29c03bbfa16b3a3e0be3f48799a4783f487da6203245fa5bed239ba7407e1
   languageName: node
   linkType: hard
 
@@ -2094,14 +1964,14 @@ __metadata:
 
 "resolve@patch:resolve@npm%3A^1.17.0#optional!builtin<compat/resolve>":
   version: 1.22.10
-  resolution: "resolve@patch:resolve@npm%3A1.22.10#optional!builtin<compat/resolve>::version=1.22.10&hash=c3c19d"
+  resolution: "resolve@patch:resolve@npm%3A1.22.10#optional!builtin<compat/resolve>::version=1.22.10&hash=9bd1a5"
   dependencies:
     is-core-module: "npm:^2.16.0"
     path-parse: "npm:^1.0.7"
     supports-preserve-symlinks-flag: "npm:^1.0.0"
   bin:
     resolve: bin/resolve
-  checksum: 10c0/52a4e505bbfc7925ac8f4cd91fd8c4e096b6a89728b9f46861d3b405ac9a1ccf4dcbf8befb4e89a2e11370dacd0160918163885cbc669369590f2f31f4c58939
+  checksum: 10c0/da5c4a85971e6eeb821805d117092321c6c257a6e1e45382c0b7ef41368a7e98690e01a08bac88b111443410a49e2fb17d1802ac5c51c8fc5532d77bef9f4be9
   languageName: node
   linkType: hard
 
@@ -2232,18 +2102,6 @@ __metadata:
   version: 2.1.2
   resolution: "safer-buffer@npm:2.1.2"
   checksum: 10c0/7e3c8b2e88a1841c9671094bbaeebd94448111dd90a81a1f606f3f67708a6ec57763b3b47f06da09fc6054193e0e6709e77325415dc8422b04497a8070fa02d4
-  languageName: node
-  linkType: hard
-
-"secp256k1@npm:5.0.1":
-  version: 5.0.1
-  resolution: "secp256k1@npm:5.0.1"
-  dependencies:
-    elliptic: "npm:^6.5.7"
-    node-addon-api: "npm:^5.0.0"
-    node-gyp: "npm:latest"
-    node-gyp-build: "npm:^4.2.0"
-  checksum: 10c0/ea977fcd3a21ee10439a546774d4f3f474f065a561fc2247f65cb2a64f09628732fd606c0a62316858abd7c07b41f5aa09c37773537f233590b4cf94d752dbe7
   languageName: node
   linkType: hard
 

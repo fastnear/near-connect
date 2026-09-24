@@ -136,15 +136,15 @@ const connector = new NearConnector({
 
 ## SignAndSendTransaction format actions
 
-This library supports two types of actions when using methods like `signAndSendTransaction`:
+This library accepts two shapes of actions in methods like `signAndSendTransaction`:
 
-1. **near-wallet-selector Action format**  
-   For backward compatibility, you can use actions in the same format as [near-wallet-selector], with all action types defined in [`./src/actions/types`](./src/actions/types.ts) (such as FunctionCall, Transfer, AddKey, etc.).
+1. **Connector action format** (the near-wallet-selector shape)  
+   `{ type, params }` discriminated unions, with every action type defined in [`./src/actions/types`](./src/actions/types.ts) (FunctionCall, Transfer, AddKey, etc.). This is the format wallets receive.
 
-2. **near-api-js actionsCreator format**  
-   You can also use actions created via the `actionsCreator` functions from `near-api-js` (for example, `transactions.functionCall(...)` and other actions from the package).
+2. **near-api-js `actionCreators` shape**  
+   Objects built with near-api-js `actionCreators` (for example `actionCreators.functionCall(...)`) are accepted **structurally**: `nearActionsToConnectorActions` reads their enum-style fields and converts them. near-connect has no dependency on near-api-js; the accepted shape is exported as `NearApiJsActionLike`. AddKey permissions other than `functionCall` / `fullAccess` and `signedDelegate` actions are rejected rather than guessed — pass a connector action instead.
 
-You can use the old action format or the near-api-js format (recommended).
+Prefer the connector format for anything near-api-js does not model.
 
 ## Wallet integration
 

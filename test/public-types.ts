@@ -1,6 +1,9 @@
 import type {
   BorshSerializedSignedDelegate,
+  ConnectorAction,
+  FinalExecutionOutcome,
   LegacySignDelegateActionResult,
+  SignAndSendTransactionParams,
   SignDelegateActionResult,
   SignDelegateActionsParams,
   SignDelegateActionsResponse,
@@ -31,3 +34,20 @@ const optionalCapability: Pick<WalletFeatures, "signDelegateActionsWithTtl"> = {
 void request;
 void response;
 void optionalCapability;
+
+// Both action shapes are accepted: a connector action, and an object shaped like
+// near-api-js actionCreators output (structural — no near-api-js import here).
+const connectorAction: ConnectorAction = { type: "Transfer", params: { deposit: "1" } };
+const nearApiJsShaped = { enum: "transfer", transfer: { deposit: 1n } };
+const send: SignAndSendTransactionParams = {
+  receiverId: "bob.near",
+  actions: [connectorAction, nearApiJsShaped],
+};
+
+declare const outcome: FinalExecutionOutcome;
+const outcomeStatus: FinalExecutionOutcome["status"] = outcome.status;
+const outcomeLogs: string[] = outcome.transaction_outcome.outcome.logs;
+
+void send;
+void outcomeStatus;
+void outcomeLogs;
