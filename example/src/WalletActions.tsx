@@ -1,5 +1,6 @@
 import { SignMessage } from "./wallet-action/SignMessage.tsx";
 import { SendTx } from "./wallet-action/SendTx.tsx";
+import { SwapIntents } from "./wallet-action/SwapIntents.tsx";
 import { smallGreyText } from "./ui/tailwind-vars.ts";
 import { IPropsWalletAction } from "./wallet-action/wallet-action.types.ts";
 
@@ -10,6 +11,7 @@ export const WalletActions = (actionProps: IPropsWalletAction) => {
       <div className={"flex flex-col flex-justify-stretch gap-4"}>
         <SignMessage {...actionProps} />
         <SendTx {...actionProps} />
+        <SwapIntents {...actionProps} />
       </div>
     </div>
   );

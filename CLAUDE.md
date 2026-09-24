@@ -25,7 +25,7 @@ Each has its own `package.json`, `node_modules`, and `tsconfig.json`:
 
 1. **Root (`./`)** — The main library published to npm as `@fastnear/near-connect`. Zero dependencies of any kind — near-api-js-shaped action input is typed structurally in `src/actions/near-api-js-shapes.ts`, and `yarn test` fails if `@near-js` shows up anywhere in `build/`. Outputs to `./build/` (npm) and `./cdn/` (browser bundles).
 2. **`near-wallets/`** — Wallet executor implementations. Each wallet is built as a standalone IIFE to `./repository/`. When `EXAMPLE=true` is set, outputs to `../example/public/repository` instead. Key devDependencies: `@fastnear/utils`, `@fastnear/borsh`, `@fastnear/borsh-schema`, `@fastnear/wallet-adapter` (always the same `@fastnear/*` release — bump them together, then rebuild `repository/`), `@noble/curves`, `@noble/hashes`, `@walletconnect/sign-client`, `qrcode-generator`.
-3. **`example/`** — React demo app with Tailwind CSS 4. Also contains `static.html`, a no-build-tools vanilla JS example.
+3. **`example/`** — React demo app with Tailwind CSS 4, deployed to `https://fastnear.github.io/near-connect/` by `deploy-example.yml`. Panels: sign message, send transaction (action builder + sign delegate action), and a mainnet-only NEAR Intents swap (`src/wallet-action/SwapIntents.tsx`, helpers in `swap-intents/flow.ts`): native NEAR → USDC/USDT through the hosted 1Click API via `@fastnear/intents`, one `wrap.near` transaction per swap (register storage, wrap, `ft_transfer` to the deposit address), then status polling. Verified through Meteor on 2026-09-24. Also contains `static.html`, a no-build-tools vanilla JS example.
 
 ### Core library (`src/`)
 
