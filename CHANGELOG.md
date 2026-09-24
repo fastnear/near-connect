@@ -1,3 +1,26 @@
+# 0.13.2
+
+- Remove the last `@near-js/*` usage from the host package. The public types
+  `Action`, `SignedDelegate` and `FinalExecutionOutcome` were `import type`d
+  from near-api-js and shipped in `build/*.d.ts` while the package declared no
+  dependency on it, so TypeScript consumers saw unresolved types. They are now
+  structural types owned by this package (`NearApiJsActionLike`,
+  `LegacySignedDelegate`, `FinalExecutionOutcome`, all exported from the root).
+  near-api-js `actionCreators` objects are still accepted by shape.
+- `nearActionsToConnectorActions`: an AddKey permission that is neither
+  `functionCall` nor `fullAccess` now throws instead of being silently mapped
+  to `FullAccess`; a `deployGlobalContract` with the `AccountId` deploy mode
+  (which near-api-js stores as `null`) now maps to `"AccountId"` instead of
+  `"CodeHash"`; `signedDelegate` actions throw a clear error.
+- `yarn test` fails if any `@near-js` reference reaches `build/`.
+
+# 0.13.1
+
+- Ship the `cdn/` bundles in the npm tarball (`files` + `prepublish` chain) so
+  the js.fastnear.com `/near-connect*` aliases resolve.
+- Popups: Escape closes with the same semantics as clicking the backdrop, and
+  `destroy()` disposes listeners so the document-level handler cannot leak.
+
 # 0.13.0
 
 - Add optional `blockHeightTtl` metadata to each delegated action and validate

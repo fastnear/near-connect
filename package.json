@@ -1,6 +1,6 @@
 {
   "name": "@fastnear/near-connect",
-  "version": "0.13.1",
+  "version": "0.13.2",
   "type": "commonjs",
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
@@ -25,13 +25,12 @@
     "build": "rm -rf build && yarn pre-build && yarn tsc",
     "prepublish": "yarn build && yarn cdn",
     "cdn": "yarn pre-build && vite build",
-    "test": "yarn build && yarn test:types && node --test test/*.test.cjs",
+    "test": "yarn build && yarn test:types && yarn test:no-near-js && node --test test/*.test.cjs",
     "test:types": "tsc --noEmit --strict --skipLibCheck --moduleResolution node --module commonjs --target ESNext test/public-types.ts",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test:no-near-js": "node build-scripts/assertNoNearJsInBuild.js"
   },
   "devDependencies": {
-    "@near-js/transactions": "^2.5.1",
-    "@near-js/types": "^2.5.1",
     "typescript": "^5.2.2",
     "vite": "^7.2.2",
     "vite-plugin-node-polyfills": "^0.24.0"
