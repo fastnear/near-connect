@@ -16,6 +16,7 @@ import {
 } from "./types";
 import { NearConnector } from "./NearConnector";
 import { nearActionsToConnectorActions } from "./actions";
+import { assertGasKeyActionsSupported } from "./actions/gas-keys";
 import { prepareDelegateActionsForTransport } from "./helpers/delegateActions";
 
 export class InjectedWallet {
@@ -52,6 +53,7 @@ export class InjectedWallet {
 
   async signAndSendTransaction(params: SignAndSendTransactionParams): Promise<FinalExecutionOutcome> {
     const actions = nearActionsToConnectorActions(params.actions);
+    assertGasKeyActionsSupported(this.manifest.features, actions, this.manifest.name);
     const network = params.network || this.connector.network;
 
     const result = await this.wallet.signAndSendTransaction({ ...params, actions, network });
@@ -69,6 +71,7 @@ export class InjectedWallet {
       receiverId: transaction.receiverId,
     }));
 
+    assertGasKeyActionsSupported(this.manifest.features, transactions.flatMap((transaction) => transaction.actions), this.manifest.name);
     const result = await this.wallet.signAndSendTransactions({ ...params, transactions, network });
     if (!result) throw new Error("No result from wallet");
 
@@ -84,7 +87,7 @@ export class InjectedWallet {
   async signDelegateActions(params: SignDelegateActionsParams): Promise<SignDelegateActionsResponse> {
     return this.wallet.signDelegateActions({
       ...params,
-      delegateActions: prepareDelegateActionsForTransport(params.delegateActions),
+      delegateActions: prepareDelegateActionsForTransport(params.delegateActions, this.manifest),
       network: params.network || this.connector.network,
     });
   }

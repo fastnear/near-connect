@@ -98,6 +98,21 @@ const CASES = [
     actions: [{ type: "CreateAccount" }, { type: "Transfer", params: { deposit: "100000000000000000000000" } }],
   },
   { name: "delete-account", receiverId: SIGNER_ID, actions: [{ type: "DeleteAccount", params: { beneficiaryId: "bob.near" } }] },
+  // Gas keys (protocol 85+). These use SIGNER_PK (bytes 00..1f) as the gas key so the
+  // action bytes are exactly the Rust-verified vectors from the fastnear monorepo
+  // (packages/borsh-schema/src/index.test.ts, borsh::to_vec on near-primitives 0.38.0-rc.2).
+  {
+    name: "add-gas-key-full-access",
+    receiverId: SIGNER_ID,
+    actions: [{ type: "AddKey", params: { publicKey: SIGNER_PK, accessKey: { permission: "FullAccess" }, gasKeyInfo: { balance: "0", numNonces: 3 } } }],
+  },
+  {
+    name: "add-gas-key-function-call",
+    receiverId: SIGNER_ID,
+    actions: [{ type: "AddKey", params: { publicKey: SIGNER_PK, accessKey: { permission: { receiverId: "app.near", methodNames: ["foo"] } }, gasKeyInfo: { balance: "0", numNonces: 3 } } }],
+  },
+  { name: "transfer-to-gas-key", receiverId: SIGNER_ID, actions: [{ type: "TransferToGasKey", params: { publicKey: SIGNER_PK, deposit: "1000000000000000000000000" } }] },
+  { name: "withdraw-from-gas-key", receiverId: SIGNER_ID, actions: [{ type: "WithdrawFromGasKey", params: { publicKey: SIGNER_PK, amount: "10000000000000000000000" } }] },
 ];
 
 // Generated with @near-js/transactions 2.5.1 — see PR description. Do not regenerate with @fastnear/*.
@@ -122,6 +137,17 @@ const EXPECTED = {
 // SignedTransaction = Transaction bytes ‖ 0x00 (ed25519Signature variant) ‖ 64 signature bytes
 EXPECTED["signed-transfer"] = EXPECTED["transfer"] + "00" + hex(SIGNATURE_BYTES);
 
+// Gas-key cases: the transaction envelope is the same header as add-key-full-access
+// (signer alice.near, pk 00..1f, nonce 42, receiver alice.near, block hash 40..5f, one
+// action); the action bytes are the monorepo's Rust-verified vectors.
+const PK_HEX = "00" + hex(SIGNER_PK_BYTES); // ed25519 variant tag + 32 bytes
+const TX_HEADER_TO_SELF = "0a000000616c6963652e6e656172" + PK_HEX + "2a00000000000000" + "0a000000616c6963652e6e656172" + hex(BLOCK_HASH_BYTES) + "01000000";
+const GAS_KEY_INFO_0_3 = "00000000000000000000000000000000" + "0300"; // balance u128 = 0, numNonces u16 = 3
+EXPECTED["add-gas-key-full-access"] = TX_HEADER_TO_SELF + "05" + PK_HEX + "0000000000000000" + "03" + GAS_KEY_INFO_0_3;
+EXPECTED["add-gas-key-function-call"] = TX_HEADER_TO_SELF + "05" + PK_HEX + "0000000000000000" + "02" + GAS_KEY_INFO_0_3 + "00" + "08000000" + "6170702e6e656172" + "01000000" + "03000000" + "666f6f";
+EXPECTED["transfer-to-gas-key"] = TX_HEADER_TO_SELF + "0c" + PK_HEX + "000000a1edccce1bc2d3000000000000"; // 1 NEAR
+EXPECTED["withdraw-from-gas-key"] = TX_HEADER_TO_SELF + "0d" + PK_HEX + "000040b2bac9e0191e02000000000000"; // 0.01 NEAR
+
 const plainTx = (receiverId, actions, nonce = NONCE) => ({ signerId: SIGNER_ID, publicKey: SIGNER_PK, nonce, receiverId, blockHash: BLOCK_HASH, actions });
 
 test("fixtures decode to the documented byte patterns", async () => {
@@ -139,6 +165,14 @@ for (const { name, receiverId, actions } of CASES) {
     assert.equal(hex(bytes), EXPECTED[name]);
   });
 }
+
+test("a gas key with an allowance is refused by the executor converter", async () => {
+  const { toFastnearActions } = await loadDeps();
+  assert.throws(
+    () => toFastnearActions([{ type: "AddKey", params: { publicKey: SIGNER_PK, accessKey: { permission: { receiverId: "app.near", allowance: "1" } }, gasKeyInfo: { balance: "0", numNonces: 1 } } }]),
+    /cannot carry an allowance/,
+  );
+});
 
 test("bigint nonce serializes identically to a number nonce", async () => {
   const { utils, serialize, toFastnearActions } = await loadDeps();

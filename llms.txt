@@ -185,6 +185,7 @@ Available features:
 - `signInWithoutAddKey`
 - `signDelegateActions`
 - `signDelegateActionsWithTtl`
+- `gasKeys` — the wallet can sign AddKey with `gasKeyInfo`, TransferToGasKey and WithdrawFromGasKey; the connector refuses those actions for wallets without it
 - `testnet`
 - `mainnet`
 

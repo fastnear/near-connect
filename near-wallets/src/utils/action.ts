@@ -45,6 +45,21 @@ export type AddKeyPermission =
       methodNames?: Array<string>;
     };
 
+/**
+ * Gas keys (protocol 85+): an access key with its own prepaid balance that
+ * pays the gas of whatever it signs, over `numNonces` independent nonce lanes.
+ * An `AddKey` creates one when `params.gasKeyInfo` is present: a "FullAccess"
+ * permission becomes GasKeyFullAccess, a function-call permission becomes
+ * GasKeyFunctionCall (which cannot carry an allowance — the balance is the
+ * allowance). Field names follow Meteor's executor format.
+ */
+export interface GasKeyInfo {
+  /** yoctoNEAR as a decimal string. Must be "0" on AddKey; fund it afterwards with TransferToGasKey. */
+  balance: string;
+  /** Independent nonce lanes, 1..1024. The AddKey fee grows with it. */
+  numNonces: number;
+}
+
 export interface AddKeyAction {
   type: "AddKey";
   params: {
@@ -53,7 +68,21 @@ export interface AddKeyAction {
       nonce?: number;
       permission: AddKeyPermission;
     };
+    /** Present ⇒ this AddKey creates a gas key (see GasKeyInfo). */
+    gasKeyInfo?: GasKeyInfo;
   };
+}
+
+/** Fund a gas key's balance. Any account may send it; `deposit` leaves the sender. */
+export interface TransferToGasKeyAction {
+  type: "TransferToGasKey";
+  params: { publicKey: string; deposit: string };
+}
+
+/** Move `amount` from a gas key back to its account. Only the owning account may sign it; not allowed inside a delegate. */
+export interface WithdrawFromGasKeyAction {
+  type: "WithdrawFromGasKey";
+  params: { publicKey: string; amount: string };
 }
 
 export interface DeleteKeyAction {
@@ -88,7 +117,9 @@ export type ConnectorAction =
   | DeleteKeyAction
   | DeleteAccountAction
   | UseGlobalContractAction
-  | DeployGlobalContractAction;
+  | DeployGlobalContractAction
+  | TransferToGasKeyAction
+  | WithdrawFromGasKeyAction;
 
 /**
  * Convert ConnectorAction[] to the flat action format expected by @fastnear/utils mapAction().
@@ -109,21 +140,46 @@ export const connectorActionsToFastnearActions = (actions: ConnectorAction[]): a
         };
       case "Transfer":
         return { type: "Transfer", deposit: action.params.deposit };
-      case "AddKey":
+      case "AddKey": {
+        const { permission } = action.params.accessKey;
+        const gasKey = action.params.gasKeyInfo;
+        if (gasKey) {
+          // @fastnear/utils flat shape: the permission kind plus the gas-key
+          // fields beside it. The chain rejects an allowance on a gas key.
+          if (permission !== "FullAccess" && permission.allowance != null) {
+            throw new Error("A gas key cannot carry an allowance: its balance is the allowance");
+          }
+          return {
+            type: "AddKey",
+            publicKey: action.params.publicKey,
+            accessKey: {
+              nonce: action.params.accessKey.nonce ?? 0,
+              permission: permission === "FullAccess" ? "GasKeyFullAccess" : "GasKeyFunctionCall",
+              numNonces: gasKey.numNonces,
+              balance: gasKey.balance,
+              ...(permission === "FullAccess" ? {} : { receiverId: permission.receiverId, methodNames: permission.methodNames ?? [] }),
+            },
+          };
+        }
         return {
           type: "AddKey",
           publicKey: action.params.publicKey,
           accessKey: {
             nonce: action.params.accessKey.nonce ?? 0,
-            permission: action.params.accessKey.permission === "FullAccess"
+            permission: permission === "FullAccess"
               ? "FullAccess"
               : {
-                  receiverId: action.params.accessKey.permission.receiverId,
-                  methodNames: action.params.accessKey.permission.methodNames ?? [],
-                  allowance: action.params.accessKey.permission.allowance,
+                  receiverId: permission.receiverId,
+                  methodNames: permission.methodNames ?? [],
+                  allowance: permission.allowance,
                 },
           },
         };
+      }
+      case "TransferToGasKey":
+        return { type: "TransferToGasKey", publicKey: action.params.publicKey, deposit: action.params.deposit };
+      case "WithdrawFromGasKey":
+        return { type: "WithdrawFromGasKey", publicKey: action.params.publicKey, amount: action.params.amount };
       case "DeleteKey":
         return { type: "DeleteKey", publicKey: action.params.publicKey };
       case "CreateAccount":

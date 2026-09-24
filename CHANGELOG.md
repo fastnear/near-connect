@@ -1,3 +1,15 @@
+# 0.14.0
+
+- Gas-key actions (protocol 85+): `AddKey` accepts `params.gasKeyInfo`
+  (`{ balance, numNonces }`, turning the permission into GasKeyFullAccess /
+  GasKeyFunctionCall), and `TransferToGasKey` / `WithdrawFromGasKey` join the
+  `ConnectorAction` union — the same shapes Meteor's own executor speaks. The
+  nightly and wallet-connect executors encode them via `@fastnear/utils` 2.4.0.
+- New manifest feature `gasKeys`. Every wallet wrapper refuses gas-key actions
+  for wallets that do not set it (`assertGasKeyActionsSupported`, exported), so a
+  wallet that does not know `gasKeyInfo` can never add a plain key by mistake.
+  No bundled wallet advertises it yet; Meteor is first once verified.
+
 # 0.13.2
 
 - Remove the last `@near-js/*` usage from the host package. The public types

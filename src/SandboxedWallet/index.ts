@@ -16,6 +16,7 @@ import {
 } from "../types";
 import { NearConnector } from "../NearConnector";
 import { nearActionsToConnectorActions } from "../actions";
+import { assertGasKeyActionsSupported } from "../actions/gas-keys";
 import { prepareDelegateActionsForTransport } from "../helpers/delegateActions";
 import SandboxExecutor from "./executor";
 
@@ -57,6 +58,7 @@ export class SandboxWallet {
 
   async signAndSendTransaction(params: SignAndSendTransactionParams): Promise<FinalExecutionOutcome> {
     const actions = nearActionsToConnectorActions(params.actions);
+    assertGasKeyActionsSupported(this.manifest.features, actions, this.manifest.name);
     const args = { ...params, actions, network: params.network || this.connector.network };
     return this.executor.call("wallet:signAndSendTransaction", args);
   }
@@ -67,6 +69,7 @@ export class SandboxWallet {
       receiverId: transaction.receiverId,
     }));
 
+    assertGasKeyActionsSupported(this.manifest.features, transactions.flatMap((transaction) => transaction.actions), this.manifest.name);
     const args = { ...params, transactions, network: params.network || this.connector.network };
     return this.executor.call("wallet:signAndSendTransactions", args);
   }
@@ -79,7 +82,7 @@ export class SandboxWallet {
   async signDelegateActions(params: SignDelegateActionsParams): Promise<SignDelegateActionsResponse> {
     const args = {
       ...params,
-      delegateActions: prepareDelegateActionsForTransport(params.delegateActions),
+      delegateActions: prepareDelegateActionsForTransport(params.delegateActions, this.manifest),
       network: params.network || this.connector.network,
     };
     return this.executor.call("wallet:signDelegateActions", args);
