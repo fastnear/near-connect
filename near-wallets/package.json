@@ -1,5 +1,6 @@
 {
   "name": "@fastnear/near-wallets",
+  "packageManager": "yarn@4.17.1",
   "version": "0.7.2",
   "type": "module",
   "license": "MIT",

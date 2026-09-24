@@ -1,5 +1,6 @@
 {
   "name": "@fastnear/near-connect",
+  "packageManager": "yarn@4.17.1",
   "version": "0.14.1",
   "type": "commonjs",
   "main": "./build/index.js",
