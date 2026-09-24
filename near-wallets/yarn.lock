@@ -194,19 +194,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fastnear/borsh-schema@npm:2.4.0, @fastnear/borsh-schema@npm:^2.4.0":
-  version: 2.4.0
-  resolution: "@fastnear/borsh-schema@npm:2.4.0"
+"@fastnear/borsh-schema@npm:2.5.0, @fastnear/borsh-schema@npm:^2.5.0":
+  version: 2.5.0
+  resolution: "@fastnear/borsh-schema@npm:2.5.0"
   dependencies:
-    "@fastnear/borsh": "npm:2.4.0"
-  checksum: 10c0/4db142a5ef73188e163eafc5187973fd472c77d992e6e840fca770ceff50dc44566592aa1f4f727e37338030f56fbf3f994cbaf913af54fc90cec2afee1429ce
+    "@fastnear/borsh": "npm:2.5.0"
+  checksum: 10c0/70fdef86c06da424ead6c319805c5e7f693e28b28475891293d786502402b570dd08af553db2e4771e8738de89725ecb02aead6fe21bd5112572ab990a7fd4d3
   languageName: node
   linkType: hard
 
-"@fastnear/borsh@npm:2.4.0, @fastnear/borsh@npm:^2.4.0":
-  version: 2.4.0
-  resolution: "@fastnear/borsh@npm:2.4.0"
-  checksum: 10c0/64e649212ef823c7fa67d7c745101b5485351b28d987869a0d6c923820bd6c50430428902743a4abe8d4ecaf434025827bb251451151dc6356d8da59d80cb062
+"@fastnear/borsh@npm:2.5.0, @fastnear/borsh@npm:^2.5.0":
+  version: 2.5.0
+  resolution: "@fastnear/borsh@npm:2.5.0"
+  checksum: 10c0/a3cd4b13da62a997223665c3f08a0e8c4d3137f513647e21180e7c2dfa4435425c430c5f60053ba569489c3785fb1122444f7ec04d5da2066c189ae992845c32
   languageName: node
   linkType: hard
 
@@ -214,10 +214,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fastnear/near-wallets@workspace:."
   dependencies:
-    "@fastnear/borsh": "npm:^2.4.0"
-    "@fastnear/borsh-schema": "npm:^2.4.0"
-    "@fastnear/utils": "npm:^2.4.0"
-    "@fastnear/wallet-adapter": "npm:^2.4.0"
+    "@fastnear/borsh": "npm:^2.5.0"
+    "@fastnear/borsh-schema": "npm:^2.5.0"
+    "@fastnear/utils": "npm:^2.5.0"
+    "@fastnear/wallet-adapter": "npm:^2.5.0"
     "@noble/curves": "npm:^2.0.1"
     "@noble/hashes": "npm:^2.0.1"
     "@types/node": "npm:^24.9.1"
@@ -229,29 +229,29 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@fastnear/utils@npm:2.4.0, @fastnear/utils@npm:^2.4.0":
-  version: 2.4.0
-  resolution: "@fastnear/utils@npm:2.4.0"
+"@fastnear/utils@npm:2.5.0, @fastnear/utils@npm:^2.5.0":
+  version: 2.5.0
+  resolution: "@fastnear/utils@npm:2.5.0"
   dependencies:
-    "@fastnear/borsh": "npm:2.4.0"
-    "@fastnear/borsh-schema": "npm:2.4.0"
+    "@fastnear/borsh": "npm:2.5.0"
+    "@fastnear/borsh-schema": "npm:2.5.0"
     "@noble/curves": "npm:=2.0.1"
     "@noble/hashes": "npm:=2.0.1"
     base58-js: "npm:=2.0.0"
     js-base64: "npm:^3.7.7"
-  checksum: 10c0/3c96d9bd0ae557e23e72987ac02bf34b036fd06e4e4edeb2f0c09f64c990084a32101b7bf117b544aa8429dd6ce96f21a8e7c5670820d4ac41d8f4b134abf203
+  checksum: 10c0/d451478e5df7a8fdd427523d54b000f6cd35cb9748ed4657ab93aba12af21039c0be5e80bc8e44ef9d8ff14304a05cddb32284185a4c5313de87ab12d2479535
   languageName: node
   linkType: hard
 
-"@fastnear/wallet-adapter@npm:^2.4.0":
-  version: 2.4.0
-  resolution: "@fastnear/wallet-adapter@npm:2.4.0"
+"@fastnear/wallet-adapter@npm:^2.5.0":
+  version: 2.5.0
+  resolution: "@fastnear/wallet-adapter@npm:2.5.0"
   dependencies:
-    "@fastnear/borsh": "npm:2.4.0"
-    "@fastnear/borsh-schema": "npm:2.4.0"
-    "@fastnear/utils": "npm:2.4.0"
+    "@fastnear/borsh": "npm:2.5.0"
+    "@fastnear/borsh-schema": "npm:2.5.0"
+    "@fastnear/utils": "npm:2.5.0"
     "@noble/curves": "npm:=2.0.1"
-  checksum: 10c0/b0cffad16b03f613ad0d79892d143eccbfa8fb1616e18b1830ecbd95437ba33b238146585bdd4e58bc3c93ec0c4a1d180df2d2b2a1d459684f95d88584392131
+  checksum: 10c0/1ef6fb7a65373e1c21f23f4088839960210eaa3a3905e2c762717a6919245e26e1c042eab4fa1c4df5c5ea33b92a238262f99e54084ee119763da0aaf5b4ff29
   languageName: node
   linkType: hard
 

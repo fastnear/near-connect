@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEAR Connect — Gas-key QA (Meteor, testnet)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #111; color: #eee; max-width: 760px; margin: 2rem auto; padding: 0 1rem; }
+    h1 { font-size: 1.3rem; } h2 { font-size: 1rem; margin: 0 0 .5rem; color: #bbb; }
+    .card { background: #1c1c1c; border: 1px solid #333; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+    button { background: #2a6; color: #000; border: 0; border-radius: 6px; padding: .5rem .9rem; font-weight: 600; cursor: pointer; margin: .2rem .3rem .2rem 0; }
+    button:disabled { background: #444; color: #999; cursor: not-allowed; }
+    button.danger { background: #c44; color: #fff; }
+    label { display: block; color: #aaa; font-size: .85rem; margin: .4rem 0 .2rem; }
+    input { background: #0a0a0a; border: 1px solid #333; border-radius: 6px; padding: .45rem; color: #eee; font-size: .85rem; width: 100%; box-sizing: border-box; }
+    pre { background: #0a0a0a; border: 1px solid #333; border-radius: 6px; padding: .6rem; font-size: .78rem; white-space: pre-wrap; word-break: break-all; max-height: 22rem; overflow: auto; }
+    .muted { color: #888; font-size: .8rem; }
+  </style>
+</head>
+<body>
+  <h1>Gas-key QA — Meteor Wallet on testnet</h1>
+  <p class="muted">
+    Cherry-picks Meteor with <code>features.gasKeys: true</code> and sends the three gas-key connector actions
+    (near-connect 0.14+). After every step the page reads the key back with <code>view_access_key</code> at
+    finality, so the RPC view is the evidence. The executor URL below decides which <code>meteor.js</code> build
+    Meteor runs. Serve this file over http (e.g. <code>cd example && python3 -m http.server 8080</code>), not <code>file://</code>.
+  </p>
+
+  <div class="card">
+    <h2>0. Executor</h2>
+    <label for="executor">Meteor executor URL (applied on Connect)</label>
+    <input id="executor" value="https://raw.githubusercontent.com/fastnear/near-connect/5e0db21ee5a4af162a5b864b8fe3902138a03060/repository/meteor.js" />
+  </div>
+
+  <div class="card">
+    <h2>1. Connect</h2>
+    <button id="btn-connect">Connect Meteor (testnet)</button>
+    <button id="btn-disconnect" class="danger" disabled>Disconnect</button>
+    <div id="status" class="muted">Not connected</div>
+  </div>
+
+  <div class="card">
+    <h2>2. Add a gas key</h2>
+    <label for="receiver">Function-call scope (contract id) — leave empty for a GasKeyFullAccess key</label>
+    <input id="receiver" value="guest-book.testnet" />
+    <label for="methods">Method names (comma-separated, empty = any)</label>
+    <input id="methods" value="addMessage" />
+    <label for="nonces">numNonces (1..1024)</label>
+    <input id="nonces" value="2" />
+    <button id="btn-add" disabled>Generate key + AddKey with gasKeyInfo</button>
+    <div class="muted">Public key: <span id="pk">—</span></div>
+  </div>
+
+  <div class="card">
+    <h2>3. Fund, drain, delete</h2>
+    <label for="deposit">TransferToGasKey deposit (yoctoNEAR)</label>
+    <input id="deposit" value="1000000000000000000000" />
+    <button id="btn-fund" disabled>TransferToGasKey</button>
+    <button id="btn-withdraw" disabled>WithdrawFromGasKey (whole balance)</button>
+    <button id="btn-delete" class="danger" disabled>DeleteKey</button>
+    <button id="btn-view" disabled>view_access_key</button>
+  </div>
+
+  <div class="card">
+    <h2>Log</h2>
+    <pre id="log"></pre>
+  </div>
+
+  <!-- The 0.14.1 cdn bundle, pinned by commit via jsDelivr's git CDN (stable even if the branch is deleted). -->
+  <script src="https://cdn.jsdelivr.net/gh/fastnear/near-connect@5e0db21ee5a4af162a5b864b8fe3902138a03060/cdn/hot-connect.iife.js"></script>
+  <script>
+    (function () {
+      var NearConnector = HOTConnect.NearConnector;
+      var RPC = "https://rpc.testnet.fastnear.com";
+      var $ = function (id) { return document.getElementById(id); };
+      var state = { connector: null, accountId: null, publicKey: null };
+
+      function log(label, value) {
+        var line = "[" + new Date().toISOString().slice(11, 19) + "] " + label + (value === undefined ? "" : " " + (typeof value === "string" ? value : JSON.stringify(value, null, 2)));
+        $("log").textContent = line + "\n\n" + $("log").textContent;
+        console.log("[gas-key-qa]", label, value);
+      }
+      function setButtons(connected) {
+        $("btn-connect").disabled = connected; $("btn-disconnect").disabled = !connected; $("btn-add").disabled = !connected;
+        var haveKey = connected && !!state.publicKey;
+        ["btn-fund", "btn-withdraw", "btn-delete", "btn-view"].forEach(function (id) { $(id).disabled = !haveKey; });
+      }
+
+      // ---- base58 (bitcoin alphabet) for the ed25519 public key
+      var ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+      function base58(bytes) {
+        var n = 0n; for (var i = 0; i < bytes.length; i++) n = n * 256n + BigInt(bytes[i]);
+        var out = ""; while (n > 0n) { out = ALPHABET[Number(n % 58n)] + out; n /= 58n; }
+        for (var j = 0; j < bytes.length && bytes[j] === 0; j++) out = "1" + out;
+        return out;
+      }
+      async function freshEd25519PublicKey() {
+        // A real Ed25519 point from Web Crypto; the private half is discarded on purpose —
+        // this QA only proves the wallet adds, funds and drains a gas key.
+        var kp = await crypto.subtle.generateKey({ name: "Ed25519" }, true, ["sign", "verify"]);
+        var raw = new Uint8Array(await crypto.subtle.exportKey("raw", kp.publicKey));
+        return "ed25519:" + base58(raw);
+      }
+
+      async function rpc(method, params) {
+        var res = await fetch(RPC, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: "qa", method: method, params: params }) });
+        var json = await res.json();
+        return json.result !== undefined ? json.result : json;
+      }
+      async function viewKey() {
+        var view = await rpc("query", { request_type: "view_access_key", finality: "final", account_id: state.accountId, public_key: state.publicKey });
+        log("view_access_key " + state.publicKey, view);
+        return view;
+      }
+
+      function buildConnector() {
+        var manifest = {
+          version: "gas-key-qa",
+          wallets: [{
+            "id": "meteor-wallet",
+            "name": "Meteor Wallet",
+            "icon": "https://raw.githubusercontent.com/Meteor-Wallet/meteor_wallet_sdk/main/assets/meteor-logo-svg.svg",
+            "description": "The most simple and secure wallet to manage your crypto, access DeFi, and explore Web3",
+            "website": "https://meteorwallet.app/",
+            "version": "qa",
+            "executor": "(set on connect)",
+            "type": "sandbox",
+            "features": {
+              "signMessage": true,
+              "signInWithoutAddKey": true,
+              "signInAndSignMessage": true,
+              "signAndSendTransaction": true,
+              "signAndSendTransactions": true,
+              "mainnet": true,
+              "testnet": true,
+              "signDelegateActions": true,
+              "signDelegateActionsWithTtl": true,
+              "gasKeys": true
+            },
+            "platform": {
+              "web": "https://wallet.meteorwallet.app",
+              "chrome": "https://chromewebstore.google.com/detail/meteor-wallet/pcndjhkinnkaohffealmlmhaepkpmgkb"
+            },
+            "permissions": {
+              "storage": true,
+              "allowsOpen": [
+                "https://chromewebstore.google.com",
+                "https://wallet.meteorwallet.app",
+                "https://meteorwallet.app"
+              ],
+              "external": [
+                "meteorCom",
+                "meteorComV2"
+              ]
+            }
+          }],
+        };
+        manifest.wallets[0].executor = $("executor").value.trim();
+        return new NearConnector({ network: "testnet", manifest: manifest, autoConnect: true });
+      }
+
+      async function send(actions, label) {
+        var wallet = await state.connector.wallet();
+        log("sending " + label, actions);
+        var outcome = await wallet.signAndSendTransaction({ receiverId: state.accountId, network: "testnet", actions: actions });
+        var hash = outcome && outcome.transaction && outcome.transaction.hash;
+        log(label + " sent", { hash: hash, status: outcome && outcome.status });
+        // Give finality a moment before reading the key back.
+        await new Promise(function (r) { setTimeout(r, 2500); });
+        return viewKey();
+      }
+
+      $("btn-connect").addEventListener("click", function () {
+        state.connector = buildConnector();
+        state.connector.on("wallet:signIn", function (e) {
+          state.accountId = e.accounts[0].accountId; $("status").textContent = "Connected: " + state.accountId + " (testnet)"; setButtons(true); log("signed in", state.accountId);
+        });
+        state.connector.on("wallet:signOut", function () { state.accountId = null; $("status").textContent = "Disconnected"; setButtons(false); });
+        log("connecting with executor", $("executor").value.trim());
+        state.connector.connect().catch(function (err) { log("connect failed", err.message); });
+      });
+      $("btn-disconnect").addEventListener("click", function () { state.connector.disconnect().catch(function (err) { log("disconnect failed", err.message); }); });
+
+      $("btn-add").addEventListener("click", async function () {
+        try {
+          var receiver = $("receiver").value.trim();
+          var methods = $("methods").value.split(",").map(function (s) { return s.trim(); }).filter(Boolean);
+          var numNonces = Number($("nonces").value);
+          state.publicKey = await freshEd25519PublicKey(); $("pk").textContent = state.publicKey;
+          var permission = receiver ? { receiverId: receiver, methodNames: methods } : "FullAccess";
+          await send([{ type: "AddKey", params: { publicKey: state.publicKey, accessKey: { permission: permission }, gasKeyInfo: { balance: "0", numNonces: numNonces } } }], "AddKey+gasKeyInfo");
+          setButtons(true);
+          log("EXPECT the view above to show GasKeyFunctionCall (or GasKeyFullAccess) with num_nonces " + numNonces + " and balance \"0\" — a plain FunctionCall/FullAccess view means the wallet DOWNGRADED the key");
+        } catch (err) { log("AddKey failed", err.message); }
+      });
+      $("btn-fund").addEventListener("click", async function () {
+        try { await send([{ type: "TransferToGasKey", params: { publicKey: state.publicKey, deposit: $("deposit").value.trim() } }], "TransferToGasKey"); }
+        catch (err) { log("TransferToGasKey failed", err.message); }
+      });
+      $("btn-withdraw").addEventListener("click", async function () {
+        try {
+          var view = await viewKey(); var perm = view.permission || {}; var info = perm.GasKeyFunctionCall || perm.GasKeyFullAccess;
+          if (!info) return log("not a gas key (or absent); nothing to withdraw", perm);
+          await send([{ type: "WithdrawFromGasKey", params: { publicKey: state.publicKey, amount: String(info.balance) } }], "WithdrawFromGasKey " + info.balance);
+        } catch (err) { log("WithdrawFromGasKey failed", err.message); }
+      });
+      $("btn-delete").addEventListener("click", async function () {
+        try { await send([{ type: "DeleteKey", params: { publicKey: state.publicKey } }], "DeleteKey"); }
+        catch (err) { log("DeleteKey failed", err.message); }
+      });
+      $("btn-view").addEventListener("click", function () { viewKey().catch(function (err) { log("view failed", err.message); }); });
+
+      setButtons(false);
+    })();
+  </script>
+</body>
+</html>

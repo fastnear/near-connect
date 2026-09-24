@@ -20,10 +20,10 @@
     "type-check": "tsc --noEmit"
   },
   "devDependencies": {
-    "@fastnear/borsh": "^2.4.0",
-    "@fastnear/borsh-schema": "^2.4.0",
-    "@fastnear/utils": "^2.4.0",
-    "@fastnear/wallet-adapter": "^2.4.0",
+    "@fastnear/borsh": "^2.5.0",
+    "@fastnear/borsh-schema": "^2.5.0",
+    "@fastnear/utils": "^2.5.0",
+    "@fastnear/wallet-adapter": "^2.5.0",
     "@noble/curves": "^2.0.1",
     "@noble/hashes": "^2.0.1",
     "@types/node": "^24.9.1",

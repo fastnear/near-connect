@@ -1,6 +1,6 @@
 {
   "name": "@fastnear/near-connect",
-  "version": "0.14.0",
+  "version": "0.14.1",
   "type": "commonjs",
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
@@ -23,8 +23,8 @@
     "pre-build": "node build-scripts/updateNearConnectVersionInCode.js",
     "build:wallets": "cd near-wallets && yarn build:wallets",
     "build": "rm -rf build && yarn pre-build && yarn tsc",
-    "prepublish": "yarn build && yarn cdn",
     "cdn": "yarn pre-build && vite build",
+    "prepublishOnly": "yarn build && yarn cdn",
     "test": "yarn build && yarn test:types && yarn test:no-near-js && node --test test/*.test.cjs",
     "test:types": "tsc --noEmit --strict --skipLibCheck --moduleResolution node --module commonjs --target ESNext test/public-types.ts",
     "type-check": "tsc --noEmit",
