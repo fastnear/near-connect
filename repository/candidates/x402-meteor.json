@@ -1,5 +1,5 @@
 {
-  "version": "x402-meteor-2026-07-16",
+  "version": "x402-meteor-2026-09-23-candidate",
   "wallets": [
     {
       "id": "meteor-wallet",
@@ -7,8 +7,8 @@
       "icon": "https://raw.githubusercontent.com/Meteor-Wallet/meteor_wallet_sdk/main/assets/meteor-logo-svg.svg",
       "description": "The most simple and secure wallet to manage your crypto, access DeFi, and explore Web3",
       "website": "https://meteorwallet.app/",
-      "version": "1.1.0-x402-20260716",
-      "executor": "https://raw.githubusercontent.com/fastnear/near-connect/f7a39dff6e84e1a58d600adf4d1159fb8baf0120/repository/meteor.js",
+      "version": "1.1.2-fastnear-2.4.0-candidate",
+      "executor": "https://raw.githubusercontent.com/fastnear/near-connect/refs/heads/chore/executors-fastnear-2.4/repository/meteor.js",
       "type": "sandbox",
       "features": {
         "signMessage": true,
@@ -32,7 +32,10 @@
           "https://wallet.meteorwallet.app",
           "https://meteorwallet.app"
         ],
-        "external": ["meteorCom", "meteorComV2"]
+        "external": [
+          "meteorCom",
+          "meteorComV2"
+        ]
       }
     }
   ]
