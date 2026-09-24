@@ -24,23 +24,22 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "yarn"
-          cache-dependency-path: "**/yarn.lock"
+          node-version: "22"
 
-      - name: Install dependencies
+      # The three lockfiles are Yarn Berry (v10 metadata); the runner's default
+      # `yarn` is classic 1.22, which cannot read them. corepack reads the
+      # packageManager pin (yarn@4.17.1, same as .prototools) from package.json.
+      - name: Enable Yarn 4 via corepack
         run: |
-          cd example
-          yarn install --frozen-lockfile
+          npm install -g corepack@latest
+          corepack enable
+          yarn --version
 
-      - name: Install wallets deps
+      - name: Install deps (root, near-wallets, example)
         run: |
-          cd near-wallets
-          yarn install --frozen-lockfile
-
-      - name: Install deps
-        run: |
-          yarn install --frozen-lockfile
+          yarn install --immutable
+          (cd near-wallets && yarn install --immutable)
+          (cd example && yarn install --immutable)
 
       - name: Build example
         run: |
