@@ -29,7 +29,7 @@
   <div class="card">
     <h2>0. Executor</h2>
     <label for="executor">Meteor executor URL (applied on Connect)</label>
-    <input id="executor" value="https://raw.githubusercontent.com/fastnear/near-connect/refs/heads/chore/executors-fastnear-2.5/repository/meteor.js" />
+    <input id="executor" value="https://raw.githubusercontent.com/fastnear/near-connect/5e0db21ee5a4af162a5b864b8fe3902138a03060/repository/meteor.js" />
   </div>
 
   <div class="card">
@@ -66,8 +66,8 @@
     <pre id="log"></pre>
   </div>
 
-  <!-- Branch build via jsDelivr's git CDN until 0.14.1 is on npm; then pin @fastnear/near-connect@0.14.1. -->
-  <script src="https://cdn.jsdelivr.net/gh/fastnear/near-connect@chore/executors-fastnear-2.5/cdn/hot-connect.iife.js"></script>
+  <!-- The 0.14.1 cdn bundle, pinned by commit via jsDelivr's git CDN (stable even if the branch is deleted). -->
+  <script src="https://cdn.jsdelivr.net/gh/fastnear/near-connect@5e0db21ee5a4af162a5b864b8fe3902138a03060/cdn/hot-connect.iife.js"></script>
   <script>
     (function () {
       var NearConnector = HOTConnect.NearConnector;

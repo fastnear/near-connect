@@ -9,6 +9,10 @@
 - Executors rebuilt on `@fastnear/*` 2.5.0: Meteor now maps gas-key actions
   (its wallet decodes them itself); Near Mobile refuses them explicitly until
   its backend confirms support.
+- Meteor's manifest entry now advertises `features.gasKeys`: an AddKey with
+  `gasKeyInfo` signed through Meteor on testnet landed as a
+  `GasKeyFunctionCall` key (tx `2vBAqFqyFdVL4aZxWCdm2H1VCV13HcXdDzXc5KDi6dGN`,
+  2026-09-24). The executor is pinned to the commit carrying the 2.5.0 build.
 - `example/gas-keys.html`: a no-build QA page that adds, funds, drains and
   deletes a gas key through Meteor on testnet and reads the key back from RPC
   after each step.

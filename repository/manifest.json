@@ -42,8 +42,8 @@
       "icon": "https://raw.githubusercontent.com/Meteor-Wallet/meteor_wallet_sdk/main/assets/meteor-logo-svg.svg",
       "description": "The most simple and secure wallet to manage your crypto, access DeFi, and explore Web3",
       "website": "https://meteorwallet.app/",
-      "version": "1.1.2-fastnear-2.4.0",
-      "executor": "https://raw.githubusercontent.com/fastnear/near-connect/9511b16fdade0cab53dbe7ab5316dc1a174ea004/repository/meteor.js",
+      "version": "1.2.0-fastnear-2.5.0-gas-keys",
+      "executor": "https://raw.githubusercontent.com/fastnear/near-connect/5e0db21ee5a4af162a5b864b8fe3902138a03060/repository/meteor.js",
       "type": "sandbox",
       "features": {
         "signMessage": true,
@@ -54,7 +54,8 @@
         "mainnet": true,
         "testnet": true,
         "signDelegateActions": true,
-        "signDelegateActionsWithTtl": true
+        "signDelegateActionsWithTtl": true,
+        "gasKeys": true
       },
       "platform": {
         "web": "https://wallet.meteorwallet.app",
