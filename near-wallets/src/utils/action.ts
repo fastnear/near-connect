@@ -1,4 +1,4 @@
-// Inline base64 encoder so action.ts stays free of @fastnear/utils (avoids portal resolution issues for non-mnw executors)
+// Inline base64 encoder so action.ts stays free of @fastnear/utils (and keeps it transpilable standalone by test/executor-bytes.test.cjs)
 const _bytesToBase64 = (bytes: Uint8Array): string => {
   let binary = "";
   for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
@@ -92,7 +92,7 @@ export type ConnectorAction =
 
 /**
  * Convert ConnectorAction[] to the flat action format expected by @fastnear/utils mapAction().
- * This has zero @near-js imports — only used by mnw.ts.
+ * Zero imports by design: used by the nightly and wallet-connect executors and by test/executor-bytes.test.cjs.
  */
 export const connectorActionsToFastnearActions = (actions: ConnectorAction[]): any[] => {
   return actions.map((action) => {

@@ -1,5 +1,5 @@
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "wallets": [
     {
       "id": "hot-wallet",
@@ -33,34 +33,6 @@
           "https://apps.apple.com",
           "hotwallet://",
           "https://wallet.near.org"
-        ]
-      }
-    },
-    {
-      "id": "mynearwallet",
-      "name": "MyNearWallet",
-      "icon": "https://storage.herewallet.app/upload/d0544304123d10518af961a15d5722ff1cef7abf62155f830e6d733e41f7da4b.png",
-      "description": "Web wallet for NEAR.",
-      "website": "https://mynearwallet.com",
-      "version": "1.0.0",
-      "executor": "https://raw.githubusercontent.com/fastnear/near-connect/refs/heads/main/repository/mnw.js",
-      "type": "sandbox",
-      "platform": {
-        "web": "https://app.mynearwallet.com"
-      },
-      "features": {
-        "signMessage": true,
-        "signInWithoutAddKey": true,
-        "signAndSendTransaction": true,
-        "signAndSendTransactions": true,
-        "addFunctionCallKey": true,
-        "testnet": true
-      },
-      "permissions": {
-        "storage": true,
-        "allowsOpen": [
-          "https://app.mynearwallet.com",
-          "https://testnet.mynearwallet.com"
         ]
       }
     },

@@ -59,11 +59,11 @@ const defaultManifests = [
 
 // Default RPC endpoints exposed to wallet executors via
 // `window.selector.providers`. Populated rather than empty so that
-// executors that read from this object (mnw, meteor, near-mobile,
+// executors that read from this object (meteor, near-mobile,
 // wallet-connect, okx) get a working URL even when the page constructs
 // `NearConnector` with no explicit `providers` override. Earlier this
 // field defaulted to `{ mainnet: [], testnet: [] }`, which caused
-// `mnw.ts` to silently route every testnet RPC call to mainnet — see
+// the former MyNearWallet executor to silently route every testnet RPC call to mainnet — see
 // commit 266d424 in this repo for the full bug story.
 export const DEFAULT_PROVIDERS: { mainnet: string[]; testnet: string[] } = {
   mainnet: ["https://rpc.mainnet.fastnear.com"],

@@ -6,7 +6,6 @@ Avaiable wallets in manifest:
 
 - hot-wallet
 - near-mobile
-- mynearwallet
 - meteor-wallet
 - intear-wallet
 - nightly-wallet

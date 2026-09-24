@@ -6,7 +6,8 @@ import { Popup } from "./Popup";
 const debugManifest = {
   id: "custom-wallet",
   name: "Custom Wallet",
-  icon: "https://www.mynearwallet.com/images/webclip.png",
+  // Neutral placeholder glyph so the debug entry depends on no wallet's hosting.
+  icon: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'><rect width='48' height='48' rx='12' fill='%23333'/><circle cx='24' cy='24' r='10' fill='%23999'/></svg>",
   description: "Custom wallet for NEAR.",
   website: "",
   version: "1.0.0",

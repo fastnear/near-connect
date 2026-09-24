@@ -27,22 +27,15 @@
 
   <div class="card">
     <h2>1. Connect Wallet</h2>
-    <button id="btn-connect">Connect with MNW</button>
+    <button id="btn-connect">Connect with Meteor Wallet</button>
     <button id="btn-disconnect" class="danger" disabled>Disconnect</button>
     <div id="status">Not connected</div>
   </div>
 
   <div class="card">
-    <h2>2. Add Function Call Key</h2>
+    <h2>2. Call Contract</h2>
     <label for="contract-id">Contract ID</label>
     <input id="contract-id" value="guest-book.testnet" placeholder="e.g. guest-book.testnet" />
-    <label for="method-names">Methods (comma-separated, empty = all)</label>
-    <input id="method-names" value="addMessage" placeholder="e.g. addMessage,getMessages" />
-    <button id="btn-add-key" disabled>Add Key</button>
-  </div>
-
-  <div class="card">
-    <h2>3. Call Contract</h2>
     <label for="call-method">Method name</label>
     <input id="call-method" value="addMessage" />
     <label for="call-args">Args (JSON)</label>
@@ -56,31 +49,45 @@
     (function () {
       var NearConnector = HOTConnect.NearConnector;
 
-      // Inline manifest with just MyNearWallet (cherry-picking)
+      // Inline manifest with just Meteor Wallet (cherry-picking; entry copied from repository/manifest.json)
       var manifest = {
-        version: "1.1.0",
+        version: "1.2.0",
         wallets: [
           {
-            id: "mynearwallet",
-            name: "MyNearWallet",
-            icon: "https://storage.herewallet.app/upload/d0544304123d10518af961a15d5722ff1cef7abf62155f830e6d733e41f7da4b.png",
-            description: "Web wallet for NEAR.",
-            website: "https://mynearwallet.com",
-            version: "1.0.0",
-            executor: "https://raw.githubusercontent.com/fastnear/near-connect/refs/heads/main/repository/mnw.js",
-            type: "sandbox",
-            platform: { web: "https://app.mynearwallet.com" },
-            features: {
-              signMessage: true,
-              signInWithoutAddKey: true,
-              signAndSendTransaction: true,
-              signAndSendTransactions: true,
-              addFunctionCallKey: true,
-              testnet: true
+            "id": "meteor-wallet",
+            "name": "Meteor Wallet",
+            "icon": "https://raw.githubusercontent.com/Meteor-Wallet/meteor_wallet_sdk/main/assets/meteor-logo-svg.svg",
+            "description": "The most simple and secure wallet to manage your crypto, access DeFi, and explore Web3",
+            "website": "https://meteorwallet.app/",
+            "version": "1.1.2-fastnear-2.4.0",
+            "executor": "https://raw.githubusercontent.com/fastnear/near-connect/9511b16fdade0cab53dbe7ab5316dc1a174ea004/repository/meteor.js",
+            "type": "sandbox",
+            "features": {
+              "signMessage": true,
+              "signInWithoutAddKey": true,
+              "signInAndSignMessage": true,
+              "signAndSendTransaction": true,
+              "signAndSendTransactions": true,
+              "mainnet": true,
+              "testnet": true,
+              "signDelegateActions": true,
+              "signDelegateActionsWithTtl": true
             },
-            permissions: {
-              storage: true,
-              allowsOpen: ["https://app.mynearwallet.com", "https://testnet.mynearwallet.com"]
+            "platform": {
+              "web": "https://wallet.meteorwallet.app",
+              "chrome": "https://chromewebstore.google.com/detail/meteor-wallet/pcndjhkinnkaohffealmlmhaepkpmgkb"
+            },
+            "permissions": {
+              "storage": true,
+              "allowsOpen": [
+                "https://chromewebstore.google.com",
+                "https://wallet.meteorwallet.app",
+                "https://meteorwallet.app"
+              ],
+              "external": [
+                "meteorCom",
+                "meteorComV2"
+              ]
             }
           }
         ]
@@ -95,7 +102,6 @@
       var $status = document.getElementById("status");
       var $connect = document.getElementById("btn-connect");
       var $disconnect = document.getElementById("btn-disconnect");
-      var $addKey = document.getElementById("btn-add-key");
       var $call = document.getElementById("btn-call");
 
       function log(msg) {
@@ -106,7 +112,6 @@
       function updateUI(connected) {
         $connect.disabled = connected;
         $disconnect.disabled = !connected;
-        $addKey.disabled = !connected;
         $call.disabled = !connected;
       }
 
@@ -141,25 +146,6 @@
           updateUI(false);
         }).catch(function (err) {
           log("Disconnect failed: " + err.message);
-        });
-      });
-
-      $addKey.addEventListener("click", function () {
-        var contractId = document.getElementById("contract-id").value.trim();
-        if (!contractId) return log("Enter a contract ID");
-
-        var raw = document.getElementById("method-names").value.trim();
-        var methodNames = raw ? raw.split(",").map(function (s) { return s.trim(); }) : [];
-
-        log("Adding function call key for " + contractId + "...");
-        connector.addFunctionCallKey({
-          contractId: contractId,
-          methodNames: methodNames,
-          network: "testnet"
-        }).then(function (result) {
-          log("Key added! publicKey: " + result.publicKey + "\ntxHash: " + result.transactionOutcome.transaction_outcome.id);
-        }).catch(function (err) {
-          log("addFunctionCallKey failed: " + err.message);
         });
       });
 
